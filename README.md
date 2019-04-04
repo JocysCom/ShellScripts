@@ -6,9 +6,7 @@ Be default Visual Studio creates 3 files:
 
 One Web.config file, which contains shared properties for all environments and Web.[Debug|Release].config files which will contain changes only relative for specific environments.
 
-<blockquote>
-  ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
-  </blockquote>
+![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
 
 There are some extensions, which provide similar functionality for other project types:
 https://marketplace.visualstudio.com/items?itemName=GolanAvraham.ConfigurationTransform
@@ -28,7 +26,7 @@ https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
 3. Then, add configuration block into *.csproj file, which will create final configuration App.Transform.Destination.[Dev|Test|Live].config files for each environments during project builds:
 
-        <Project>
+          <Project>
           ...
           <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
           <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
