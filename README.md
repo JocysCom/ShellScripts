@@ -26,18 +26,20 @@ https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
 3. Then, add configuration block into _*.csproj_ file, which will create final configuration _App.Transform.Destination.[Dev|Test|Live].config_ files for each environments during project builds:
 
-          <Project>
-          ...
-          <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
-          <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-               Other similar extension points exist, see Microsoft.Common.targets. -->
-          <Target Name="BeforeCompile">
-            <!-- Happens after PreBuildEvent but BeforeCompile -->
-            <TransformXml Source="App.Transform.Source.config" Transform="App.Dev.config" Destination="App.Transform.Destination.Dev.config" />
-            <TransformXml Source="App.Transform.Source.config" Transform="App.Test.config" Destination="App.Transform.Destination.Test.config" />
-            <TransformXml Source="App.Transform.Source.config" Transform="App.Live.config" Destination="App.Transform.Destination.Live.config" />
-          </Target>
-        </Project>
+```
+<Project>
+...
+  <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets. -->
+  <Target Name="BeforeCompile">
+    <!-- Happens after PreBuildEvent but BeforeCompile -->
+    <TransformXml Source="App.Transform.Source.config" Transform="App.Dev.config" Destination="App.Transform.Destination.Dev.config" />
+    <TransformXml Source="App.Transform.Source.config" Transform="App.Test.config" Destination="App.Transform.Destination.Test.config" />
+    <TransformXml Source="App.Transform.Source.config" Transform="App.Live.config" Destination="App.Transform.Destination.Live.config" />
+  </Target>
+</Project>
+```
 
 You can also exclude _App.config_ from source control:
 
