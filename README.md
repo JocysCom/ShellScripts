@@ -60,10 +60,12 @@ This is example of publishing script line, which will copy correct configuration
 
 For example to _MyProject (TEST).pubxml_:
 
-        <Target Name="CustomAfterPublish" AfterTargets="GatherAllFilesToPublish">
-          <Message Text="********************************** GatherAllFilesToPublish ***********************************" Importance="high"/>
-          <Exec Command="copy /y &quot;$(ProjectDir)App.Transform.Destination.Test.config&quot; &quot;$(ProjectDir)obj\$(ConfigurationName)\Package\PackageTmp\Web.config&quot;" />
-        </Target>
+```
+<Target Name="CustomAfterPublish" AfterTargets="GatherAllFilesToPublish">
+  <Message Text="********************************** GatherAllFilesToPublish ***********************************" Importance="high"/>
+  <Exec Command="copy /y &quot;$(ProjectDir)App.Transform.Destination.Test.config&quot; &quot;$(ProjectDir)obj\$(ConfigurationName)\Package\PackageTmp\Web.config&quot;" />
+</Target>
+```
 
 ## How transform configuration files outside the Visual Studio?
 
