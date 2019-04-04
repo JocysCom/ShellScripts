@@ -8,7 +8,7 @@ If you start **XmlTransform.bat** then it will execute **XmlTransform.cs** C# sc
 
 1. Search for all configuration files by using pattern _[App|Web].&lt;Environment&gt;.config_.
 2. Offer you the choice to which environment you would like to switch.
-3. Transform all configuration files and swith _App.config_ and _Web.config_ files to environment of your choice.
+3. Transform all configuration files and switch _App.config_ and _Web.config_ files to environment of your choice.
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png) 
 
