@@ -8,17 +8,17 @@ Visual Studio provides good way to manage configuration files for different envi
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
 
-There are some extensions, which provide similar functionality for other project types:
+You can add more environments and there are extensions, which will provide similar functionality for other project types:
 https://marketplace.visualstudio.com/items?itemName=GolanAvraham.ConfigurationTransform
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/VsExtension.jpg](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/VsExtension.jpg)
 
-With some extra steps, you can reuse configuration file transform feature in other project types and without using any third party Visual Studio Extension.
+Good news is that with some extra steps, you can reuse configuration file transform feature in other project types and without using any third party Visual Studio extension.
 
 For example, you can create:
 
-1.	App.Transform.Source.config file which will contain configuration shared between DEV, TEST and LIVE environments.
-2.	And put all differences in App.[Dev|Live|Test].config files:
+1. App.Transform.Source.config file which will contain configuration shared between DEV, TEST and LIVE environments.
+2. And put all differences in App.[Dev|Live|Test].config files:
 Note: You can use File Nesting extension to put files as children of other file.
 https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
