@@ -1,4 +1,4 @@
-# XML Transform script for Visual Studio project configuration files.
+# Transform script for XML configuration files.
 ---
 Visual Studio provides good way to manage configuration files for different environments for Web Application Projects. Visual Studio creates 3 files:
 1. _Web.config_ file, which contains shared properties for all environments.
