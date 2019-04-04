@@ -66,13 +66,13 @@ You can also exclude _App.config_ from source control:
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png) 
 
 
-## What are benefits of this system?
+## What are Benefits of This System?
 
 1. Organized and smaller configuration files.
 2. Source control client won’t give you warnings about changed _Web.config_ or _App.Config_ file after you switch project environment.
 
 
-## How to use it in Visual Studio project Publishing Scripts?
+## How to use in Visual Studio Project Publishing Scripts
 
 This is example of publishing script line, which will copy correct configuration file into specific environment:
 
