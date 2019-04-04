@@ -6,7 +6,7 @@ You can drop **XmlTransfrom.bat** and **XmlTransform.cs** script files into any 
 
 If you start **XmlTransform.bat** then it will execute **XmlTransform.cs** C# script, which will:
 
-1. Search for all configuration files by using pattern _[App|Web].<Environment>.config_.
+1. Search for all configuration files by using pattern _[App|Web].&lt;Environment&gt;.config_.
 2. Offer you the choice to which environment you would like to switch.
 3. Transform all configuration files and swith _App.config_ and _Web.config_ files to environment of your choice.
 
