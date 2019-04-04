@@ -53,8 +53,8 @@ You can also exclude _App.config_ from source control:
 
 ## What are benefits of this system?
 
-a)	Organized and smaller configuration files.
-b)	Source control client won’t give you warnings about changed _Web.config_ or _App.Config_ file after you switch project environment.
+1. Organized and smaller configuration files.
+2. Source control client won’t give you warnings about changed _Web.config_ or _App.Config_ file after you switch project environment.
 
 
 ## How to use it in Visual Studio project Publishing Scripts?
