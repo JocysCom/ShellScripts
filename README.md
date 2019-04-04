@@ -1,10 +1,10 @@
 # XmlTransform
 #### XML Transform script for Visual Studio project configuration files.
 ---
-Visual Studio provides good way to manage configuration files for different environments for Web Application Projects.
-Be default Visual Studio creates 3 files:
-
-One Web.config file, which contains shared properties for all environments and Web.[Debug|Release].config files which will contain changes only relative for specific environments.
+Visual Studio provides good way to manage configuration files for different environments for Web Application Projects. Visual Studio creates 3 files:
+1. Web.config file, which contains shared properties for all environments.
+2. Web.Debug.config file for use in developing environment (contains only transformation changes).
+3. Web.Release.config file for use in production environment (contains only transformation changes).
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
 
