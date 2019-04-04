@@ -2,9 +2,9 @@
 #### XML Transform script for Visual Studio project configuration files.
 ---
 Visual Studio provides good way to manage configuration files for different environments for Web Application Projects. Visual Studio creates 3 files:
-1. Web.config file, which contains shared properties for all environments.
-2. Web.Debug.config file for use in developing environment (contains only transformation changes).
-3. Web.Release.config file for use in production environment (contains only transformation changes).
+1. _Web.config_ file, which contains shared properties for all environments.
+2. _Web.Debug.config_ file for use in developing environment (contains only transformation changes).
+3. _Web.Release.config_ file for use in production environment (contains only transformation changes).
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
 
@@ -15,16 +15,16 @@ https://marketplace.visualstudio.com/items?itemName=GolanAvraham.ConfigurationTr
 
 Good news is that with some extra steps, you can reuse configuration file transform feature in other project types and without using any third party Visual Studio extension.
 
-For example, you can create:
+For example, you can reorganize a litte bit and create:
 
-1. App.Transform.Source.config file which will contain configuration shared between DEV, TEST and LIVE environments.
-2. And put all differences in App.[Dev|Live|Test].config files:
+1. _App.Transform.Source.config_ file which will contain configuration shared between DEV, TEST and LIVE environments.
+2. And put all differences in _App.[Dev|Live|Test].config_ files:
 Note: You can use File Nesting extension to put files as children of other file.
 https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfig.png)
 
-3. Then, add configuration block into *.csproj file, which will create final configuration App.Transform.Destination.[Dev|Test|Live].config files for each environments during project builds:
+3. Then, add configuration block into _*.csproj_ file, which will create final configuration _App.Transform.Destination.[Dev|Test|Live].config_ files for each environments during project builds:
 
           <Project>
           ...
@@ -39,7 +39,7 @@ https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
           </Target>
         </Project>
 
-You can also exclude App.config from source control:
+You can also exclude _App.config_ from source control:
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfigSourceControl.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfigSourceControl.png) 
 
@@ -52,13 +52,13 @@ You can also exclude App.config from source control:
 ## What are benefits of this system?
 
 a)	Organized and smaller configuration files.
-b)	Source control client won’t give you warnings about changed Web.config or App.Config file after you switch project environment.
+b)	Source control client won’t give you warnings about changed _Web.config_ or _App.Config_ file after you switch project environment.
 
 ## How to use it in Visual Studio project Publishing Scripts?
 
 This is example of publishing script line, which will copy correct configuration file into specific environment:
 
-For example to MyProject (TEST).pubxml:
+For example to _MyProject (TEST).pubxml_:
 
         <Target Name="CustomAfterPublish" AfterTargets="GatherAllFilesToPublish">
           <Message Text="********************************** GatherAllFilesToPublish ***********************************" Importance="high"/>
@@ -67,14 +67,14 @@ For example to MyProject (TEST).pubxml:
 
 ## How transform configuration files outside the Visual Studio?
 
-You can drop XmlTransfrom.bat + XmlTransform.cs script files into any folder, which contains projects and solutions.
+You can drop _XmlTransfrom.bat_ and _XmlTransform.cs_ script files into any folder, which contains projects and solutions.
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png) 
 
-If you start XmlTransform.bat then it will execute XmlTransform.cs C# script, which will:
+If you start _XmlTransform.bat_ then it will execute _XmlTransform.cs_ C# script, which will:
 
-1.	Search for all configuration files it can find by using pattern [App|Web].<Environment>.config
-2.	Offer you the choice to which environment you would like to switch your projects.
-3.	After your choice, it will transform all configuration files for all environments and update App.config or Web.config to environment of your choice.
+1. Search for all configuration files it can find by using pattern _[App|Web].<Environment>.config_
+2. Offer you the choice to which environment you would like to switch your projects.
+3. After your choice, it will transform all configuration files for all environments and update _App.config_ or _Web.config_ to environment of your choice.
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png) 
