@@ -1,5 +1,20 @@
 # Transform script for XML configuration files
 
+You can drop **XmlTransfrom.bat** and **XmlTransform.cs** script files into any folder, which contains projects and solutions.
+
+![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png) 
+
+If you start **XmlTransform.bat** then it will execute **XmlTransform.cs** C# script, which will:
+
+1. Search for all configuration files by using pattern _[App|Web].<Environment>.config_.
+2. Offer you the choice to which environment you would like to switch.
+3. Transform all configuration files and swith _App.config_ and _Web.config_ files to environment of your choice.
+
+![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png) 
+
+
+## How to Organize Configuration Files
+
 Visual Studio provides good way to manage configuration files for different environments for Web Application Projects. Visual Studio creates 3 files:
 1. _Web.config_ file, which contains shared properties for all environments.
 2. _Web.Debug.config_ file for use in developing environment (contains only transformation changes).
@@ -69,18 +84,3 @@ For example to _MyProject (TEST).pubxml_:
   <Exec Command="copy /y &quot;$(ProjectDir)App.Transform.Destination.Test.config&quot; &quot;$(ProjectDir)obj\$(ConfigurationName)\Package\PackageTmp\Web.config&quot;" />
 </Target>
 ```
-
-
-## How transform configuration files outside the Visual Studio?
-
-You can drop _XmlTransfrom.bat_ and _XmlTransform.cs_ script files into any folder, which contains projects and solutions.
-
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png) 
-
-If you start _XmlTransform.bat_ then it will execute _XmlTransform.cs_ C# script, which will:
-
-1. Search for all configuration files it can find by using pattern _[App|Web].<Environment>.config_
-2. Offer you the choice to which environment you would like to switch your projects.
-3. After your choice, it will transform all configuration files for all environments and update _App.config_ or _Web.config_ to environment of your choice.
-
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png) 
