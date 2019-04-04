@@ -1,5 +1,4 @@
-# XmlTransform
-#### XML Transform script for Visual Studio project configuration files.
+# XML Transform script for Visual Studio project configuration files.
 ---
 Visual Studio provides good way to manage configuration files for different environments for Web Application Projects. Visual Studio creates 3 files:
 1. _Web.config_ file, which contains shared properties for all environments.
@@ -51,11 +50,13 @@ You can also exclude _App.config_ from source control:
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png) 
 
+---
 ## What are benefits of this system?
 
 a)	Organized and smaller configuration files.
 b)	Source control client won’t give you warnings about changed _Web.config_ or _App.Config_ file after you switch project environment.
 
+---
 ## How to use it in Visual Studio project Publishing Scripts?
 
 This is example of publishing script line, which will copy correct configuration file into specific environment:
@@ -69,6 +70,7 @@ For example to _MyProject (TEST).pubxml_:
 </Target>
 ```
 
+---
 ## How transform configuration files outside the Visual Studio?
 
 You can drop _XmlTransfrom.bat_ and _XmlTransform.cs_ script files into any folder, which contains projects and solutions.
