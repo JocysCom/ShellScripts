@@ -8,6 +8,7 @@ using System.Configuration.Install;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -195,28 +196,28 @@ public class Program
         var status = transformation.Apply(document) ? "" : "Failure: ";
         Console.Write("    {0}{1,-" + maxName + "} => {2,-" + maxDest + "}", status, Path.GetFileName(transformPath), Path.GetFileName(destinationPath));
 		var ms = new MemoryStream();
+		// Apply formatting.
 		var xws = new XmlWriterSettings();
 		xws.Indent = true;
+		xws.IndentChars = "\t";
 		xws.CheckCharacters = true;
-		var xw = XmlTextWriter.Create(ms, xws);
+		var xw = XmlWriter.Create(ms, xws);
 		document.WriteTo(xw);
 		xw.Close();
-		//return sb.ToString();
-		//document.Save(ms);
-        var bytes = ms.ToArray();
-        // If file is missing or different then...
-        if (!File.Exists(destinationPath) || IsDifferent(destinationPath, bytes))
+		var bytes = ms.ToArray();
+		// If file is missing or different then...
+		if (!File.Exists(destinationPath) || IsDifferent(destinationPath, bytes))
         {
-            // Save file.
-            document.Save(destinationPath);
+			// Save file.
+			File.WriteAllBytes(destinationPath, bytes);
         }
         document.Dispose();
         return true;
     }
 
-    #region CurrentDomain_AssemblyResolve
+	#region CurrentDomain_AssemblyResolve
 
-    static List<string> LoadedAssemblies = new List<string>();
+	static List<string> LoadedAssemblies = new List<string>();
 
     static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs e)
     {
