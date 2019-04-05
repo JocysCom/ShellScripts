@@ -31,5 +31,29 @@ namespace JocysCom.XmlTransform.Tester.Properties {
                 return ((string)(this["SettingName1"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\")]
+        public string FolderTextBoxText {
+            get {
+                return ((string)(this["FolderTextBoxText"]));
+            }
+            set {
+                this["FolderTextBoxText"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Test")]
+        public string EnvironmentTextBoxText {
+            get {
+                return ((string)(this["EnvironmentTextBoxText"]));
+            }
+            set {
+                this["EnvironmentTextBoxText"] = value;
+            }
+        }
     }
 }
