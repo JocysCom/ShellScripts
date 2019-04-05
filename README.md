@@ -61,7 +61,9 @@ You can also exclude _App.config_ from source control:
 
 …and add one line to Pre-build event on Project properties, which will restore missing App.config file after you acquire clean Project from the Source Control:
 
-        if NOT EXIST "$(ProjectDir)App.config" copy "$(ProjectDir)App.Transform.Destination.Dev.config" "$(ProjectDir)App.config"
+```batchfile
+if NOT EXIST "$(ProjectDir)App.config" COPY "$(ProjectDir)App.Transform.Destination.Dev.config" "$(ProjectDir)App.config"
+```
 
 ![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png) 
 
