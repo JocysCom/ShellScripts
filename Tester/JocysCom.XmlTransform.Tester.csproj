@@ -135,4 +135,8 @@
     </Resource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>if NOT EXIST "$(ProjectDir)App.config" COPY "$(ProjectDir)App.Transform.Destination.Dev.config" "$(ProjectDir)App.config"
+</PreBuildEvent>
+  </PropertyGroup>
 </Project>
