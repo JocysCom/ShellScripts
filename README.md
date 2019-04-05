@@ -40,7 +40,7 @@ https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
 3. Then, add configuration block into _*.csproj_ file, which will create final configuration _App.Transform.Destination.[Dev|Test|Live].config_ files for each environments during project builds:
 
-```
+```xml
 <Project>
 ...
   <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
@@ -78,7 +78,7 @@ This is example of publishing script line, which will copy correct configuration
 
 For example to _MyProject (TEST).pubxml_:
 
-```
+```xml
 <Target Name="CustomAfterPublish" AfterTargets="GatherAllFilesToPublish">
   <Message Text="********************************** GatherAllFilesToPublish ***********************************" Importance="high"/>
   <Exec Command="copy /y &quot;$(ProjectDir)App.Transform.Destination.Test.config&quot; &quot;$(ProjectDir)obj\$(ConfigurationName)\Package\PackageTmp\Web.config&quot;" />
