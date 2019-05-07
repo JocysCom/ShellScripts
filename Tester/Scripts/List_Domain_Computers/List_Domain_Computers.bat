@@ -49,11 +49,12 @@ SET u1=System.Configuration
 SET u2=System.Configuration.Install
 SET u3=System.Xml
 SET u4=System.DirectoryServices
+SET u5=System.DirectoryServices.AccountManagement
 :: Run script.
 PowerShell.exe ^
 Set-ExecutionPolicy RemoteSigned; ^
 $source = Get-Content -Raw -Path '%csFile%'; ^
-Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%','%u4%'); ^
+Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%','%u4%','%u5%'); ^
 $args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
 [List_Domain_Computers]::Main($args)
 GOTO:EOF

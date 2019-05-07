@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
 using System.DirectoryServices;
+using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -19,55 +20,62 @@ public class List_Domain_Computers
 		Console.WriteLine("Domain: {0}", domain);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
 		var list = GetComputers(domain)
-			.OrderBy(x=>x.Sytem).ThenBy(x=>x.Name).ToArray();
-		var sb = new StringBuilder();
+			.OrderBy(x => x.Sytem).ThenBy(x => x.Name).ToArray();
+		Console.WriteLine("{0} names exported", list.Length);
 		// Flush servers.
 		var servers = list.Where(x => x.Sytem.Contains("Server")).ToArray();
-		for (int i = 0; i < servers.Length; i++)
-		{
-			var item = servers[i];
-			sb.AppendFormat("{0},{1},{2},{3},{4}\r\n", item.Name, item.Address, item.Sytem, item.Pack, item.Version);
-		}
-		System.IO.File.WriteAllText("Domain_Servers.csv", sb.ToString());
-		// Flush Clients.
-		sb.Clear();
+		Write(servers, "Domain_Servers.csv");
 		list = list.Except(servers).ToArray();
 		var clients = list.Where(x => x.Sytem.Contains("Windows")).ToArray();
-		for (int i = 0; i < clients.Length; i++)
-		{
-			var item = clients[i];
-			sb.AppendFormat("{0},{1},{2},{3},{4}\r\n", item.Name, item.Address, item.Sytem, item.Pack, item.Version);
-		}
-		System.IO.File.WriteAllText("Domain_Clients.csv", sb.ToString());
+		Write(clients, "Domain_Clients.csv");
 		list = list.Except(clients).ToArray();
-		// Flush other.
-		sb.Clear();
+		Write(list, "Domain_Other.csv");
+		Console.WriteLine();
+	}
+
+	static void Write(Computer[] list, string file)
+	{
+		var sb = new StringBuilder();
 		for (int i = 0; i < list.Length; i++)
 		{
 			var item = list[i];
-			sb.AppendFormat("{0},{1},{2},{3},{4}\r\n", item.Name, item.Address, item.Sytem, item.Pack, item.Version);
+			sb.AppendFormat("{0},{1},{2:yyyy-MM HH:mm},{3},{4},{5}\r\n", item.Name, item.Address, item.Logon, item.Sytem, item.Pack, item.Version);
 		}
-		System.IO.File.WriteAllText("Domain_Other.csv", sb.ToString());
-		Console.WriteLine("{0} names exported", list.Length);
-		Console.WriteLine();
+		System.IO.File.WriteAllText(file, sb.ToString());
 	}
 
 	public static List<Computer> GetComputers(string domain)
 	{
+		var auths = new List<AuthenticablePrincipal>();
+
+		using (var context = new PrincipalContext(ContextType.Domain, domain))
+		{
+			using (var searcher = new PrincipalSearcher(new ComputerPrincipal(context)))
+			{
+				foreach (var result in searcher.FindAll())
+				{
+					var auth = result as AuthenticablePrincipal;
+					if (auth != null)
+						auths.Add(auth);
+				}
+			}
+		}
+
 		var list = new List<Computer>();
 		var entry = new DirectoryEntry("LDAP://" + domain);
-		var searcher = new DirectorySearcher(entry);
-		searcher.Filter = ("(objectClass=computer)");
-		searcher.SizeLimit = int.MaxValue;
-		searcher.PageSize = int.MaxValue;
-		var all = searcher.FindAll().Cast<SearchResult>().ToArray();
+		var ds = new DirectorySearcher(entry);
+		//ds.PropertiesToLoad.AddRange(new string[] { "samAccountName", "lastLogon" });
+		ds.Filter = ("(objectClass=computer)");
+		ds.SizeLimit = int.MaxValue;
+		ds.PageSize = int.MaxValue;
+		var all = ds.FindAll().Cast<SearchResult>().ToArray();
 		Console.Write("Progress: ");
 		for (int i = 0; i < all.Length; i++)
 		{
 			var result = all[i];
-			var item = result.GetDirectoryEntry();
-			var name = item.Name;
-			var os = string.Format("{0}", item.Properties["OperatingSystem"].Value)
+			var sr = result.GetDirectoryEntry();
+			var name = sr.Name;
+			var os = string.Format("{0}", sr.Properties["OperatingSystem"].Value)
 				.Replace("Standard", "")
 				.Replace("Datacenter", "")
 				.Replace("Enterprise", "")
@@ -75,11 +83,17 @@ public class List_Domain_Computers
 				.Replace("™", "")
 				.Trim();
 			var sp = os.Contains("Windows")
-				? string.Format("{0}", item.Properties["OperatingSystemServicePack"].Value)
+				? string.Format("{0}", sr.Properties["OperatingSystemServicePack"].Value)
 				.Replace("Service Pack ", "SP")
 				.Trim()
 				: "";
-			var ov = string.Format("{0}", item.Properties["OperatingSystemVersion"].Value).Trim();
+			var ov = string.Format("{0}", sr.Properties["OperatingSystemVersion"].Value).Trim();
+			DateTime? ll = null;
+			//if (sr.Properties["LastLogonTimeStamp"] != null && sr.Properties["LastLogonTimeStamp"].Count > 0)
+			//{
+			//	long lastLogon = (long)sr.Properties["LastLogonTimeStamp"][0];
+			//	ll = DateTime.FromFileTime(lastLogon);
+			//}
 			if (name.StartsWith("CN="))
 				name = name.Remove(0, "CN=".Length);
 			string ips = "";
@@ -103,12 +117,13 @@ public class List_Domain_Computers
 				Version = ov,
 				Pack = sp,
 				Address = ips,
+				Logon = ll,
 			};
 			list.Add(computer);
 			Write(i, all.Length);
 		}
 		Console.WriteLine();
-		searcher.Dispose();
+		ds.Dispose();
 		entry.Dispose();
 		return list;
 	}
@@ -120,6 +135,7 @@ public class List_Domain_Computers
 		public string Version;
 		public string Pack;
 		public string Address;
+		public DateTime? Logon;
 	}
 
 
