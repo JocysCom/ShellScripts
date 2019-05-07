@@ -59,6 +59,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -79,12 +80,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="..\XmlTransform.cs">
-      <Link>Scripts\XmlTransform.cs</Link>
+    <Compile Include="..\XML_Transform.cs">
+      <Link>Scripts\XML_Transform\XML_Transform.cs</Link>
     </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -113,8 +115,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="..\XmlTransform.bat">
-      <Link>Scripts\XmlTransform.bat</Link>
+    <None Include="..\XML_Transform.bat">
+      <Link>Scripts\XML_Transform\XML_Transform.bat</Link>
     </None>
     <None Include="App.Dev.config">
       <DependentUpon>App.config</DependentUpon>
@@ -141,6 +143,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
