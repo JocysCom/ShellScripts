@@ -2,9 +2,7 @@
 
 As a C# developer I like to run pure C# as a script instead of using PowerShell as a procxy.
 
-## XML Transform -
-
-[Wiki...](https://github.com/JocysCom/ShellScripts/wiki/XML-Transform) 
+## XML Transform - [Wiki...](https://github.com/JocysCom/ShellScripts/wiki/XML-Transform) 
 
 Transform XML Connfiguration files for different environments like Visual Studio does for Web Application Projects.
 
