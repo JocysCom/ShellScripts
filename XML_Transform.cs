@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-public class Program
+public class XML_Transform
 {
 	public class Transform
 	{
