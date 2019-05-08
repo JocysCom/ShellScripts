@@ -24,21 +24,29 @@ public class List_Domain_Computers
 		var list = GetComputers(domain)
 			.OrderBy(x => x.Os).ThenBy(x => x.Name).ToArray();
 		Console.WriteLine("{0} names exported", list.Length);
+		//item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
+		var maxs = new List<int>();
+		maxs.Add(list.Max(x => string.Format("{0}", x.Name).Length));
+		maxs.Add(list.Max(x => string.Format("{0}", x.Address).Length));
+		maxs.Add(list.Max(x => string.Format("{0:yyyy-MM-dd HH:mm}", x.LastLogon).Length));
+		maxs.Add(list.Max(x => string.Format("{0}", x.Os).Length));
+		maxs.Add(list.Max(x => string.Format("{0}", x.OsPack).Length));
+		maxs.Add(list.Max(x => string.Format("{0}", x.OsVersion).Length));
 		// Flush servers.
 		var servers = list.Where(x => x.Os.Contains("Server")).ToArray();
-		Write(servers, "Domain_Servers", true);
-		Write(servers, "Domain_Servers", false);
+		Write(servers, "Domain_Servers", true, maxs);
+		Write(servers, "Domain_Servers", false, maxs);
 		list = list.Except(servers).ToArray();
 		var clients = list.Where(x => x.Os.Contains("Windows")).ToArray();
-		Write(clients, "Domain_Clients", true);
-		Write(clients, "Domain_Clients", false);
+		Write(clients, "Domain_Clients", true, maxs);
+		Write(clients, "Domain_Clients", false, maxs);
 		list = list.Except(clients).ToArray();
-		Write(list, "Domain_Other", true);
-		Write(list, "Domain_Other", false);
+		Write(list, "Domain_Other", true, maxs);
+		Write(list, "Domain_Other", false, maxs);
 		Console.WriteLine();
 	}
 
-	static void Write(Computer[] list, string file, bool active)
+	static void Write(Computer[] list, string file, bool active, List<int> maxs)
 	{
 		var sb = new StringBuilder();
 		var now = DateTime.Now;
@@ -49,11 +57,15 @@ public class List_Domain_Computers
 		for (int i = 0; i < list.Length; i++)
 		{
 			var item = list[i];
-			sb.AppendFormat("{0},{1},{2:yyyy-MM-dd HH:mm},{3},{4},{5}\r\n",
+			var m = 0;
+			sb.AppendFormat("{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "}  {2,-" + maxs[m++] + ":yyyy-MM-dd HH:mm}  {3,-" + maxs[m++] + "}  {4,-" + maxs[m++] + "}  {5,-" + maxs[m++] + "}\r\n",
 				item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
 			);
+			//sb.AppendFormat("{0,{1},{2:yyyy-MM-dd HH:mm},{3},{4},{5}\r\n",
+			//	item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
+			//);
 		}
-		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") +".csv", sb.ToString());
+		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") + ".txt", sb.ToString());
 	}
 
 	public static List<Computer> GetComputers(string domain)
@@ -77,6 +89,8 @@ public class List_Domain_Computers
 				.Replace("Datacenter", "")
 				.Replace("Enterprise", "")
 				.Replace("Professional", "")
+				.Replace("Business", "")
+				.Replace("PC Edition", "")
 				.Replace("Pro", "")
 				.Replace("®", "")
 				.Replace("™", "")
