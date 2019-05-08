@@ -37,7 +37,14 @@ SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
 :: <script> <working_folder> <pattern> <data_file>
+:: HTTPS
 CALL:PS "/host=www.google.com" "/port=443"
+:: LDAP using Active Domain:
+::CALL:PS "/host=ServerName" "/port=636"
+:: LDAP using Global Catalog:
+::CALL:PS "/host=ServerName" "/port=3269"
+:: Remote Desktop Protocol (RDP):
+::CALL:PS "/host=ServerName" "/port=3389"
 ECHO.
 pause
 GOTO:EOF
