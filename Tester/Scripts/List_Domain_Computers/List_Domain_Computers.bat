@@ -37,7 +37,7 @@ SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
 :: <script> <working_folder> <pattern> <data_file>
-CALL:PS "/domain=cityfleet.local"
+CALL:PS "/domain="
 ECHO.
 pause
 GOTO:EOF

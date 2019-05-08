@@ -17,50 +17,47 @@ public class List_Domain_Computers
 		// Requires System.Configuration.Installl reference.
 		var ic = new InstallContext(null, args);
 		var domain = ic.Parameters["domain"];
+		if (string.IsNullOrEmpty(domain))
+			domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 		Console.WriteLine("Domain: {0}", domain);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
 		var list = GetComputers(domain)
-			.OrderBy(x => x.Sytem).ThenBy(x => x.Name).ToArray();
+			.OrderBy(x => x.Os).ThenBy(x => x.Name).ToArray();
 		Console.WriteLine("{0} names exported", list.Length);
 		// Flush servers.
-		var servers = list.Where(x => x.Sytem.Contains("Server")).ToArray();
-		Write(servers, "Domain_Servers.csv");
+		var servers = list.Where(x => x.Os.Contains("Server")).ToArray();
+		Write(servers, "Domain_Servers", true);
+		Write(servers, "Domain_Servers", false);
 		list = list.Except(servers).ToArray();
-		var clients = list.Where(x => x.Sytem.Contains("Windows")).ToArray();
-		Write(clients, "Domain_Clients.csv");
+		var clients = list.Where(x => x.Os.Contains("Windows")).ToArray();
+		Write(clients, "Domain_Clients", true);
+		Write(clients, "Domain_Clients", false);
 		list = list.Except(clients).ToArray();
-		Write(list, "Domain_Other.csv");
+		Write(list, "Domain_Other", true);
+		Write(list, "Domain_Other", false);
 		Console.WriteLine();
 	}
 
-	static void Write(Computer[] list, string file)
+	static void Write(Computer[] list, string file, bool active)
 	{
 		var sb = new StringBuilder();
+		var now = DateTime.Now;
+		// Get list of computers which connected in last 5 weeks.
+		var activeList = list.Where(x => x.LastLogon.HasValue && now.Subtract(x.LastLogon.Value) < new TimeSpan(7 * 5, 0, 0, 0, 0)).ToArray();
+		var absentList = list.Except(activeList).ToArray();
+		list = active ? activeList : absentList;
 		for (int i = 0; i < list.Length; i++)
 		{
 			var item = list[i];
-			sb.AppendFormat("{0},{1},{2:yyyy-MM HH:mm},{3},{4},{5}\r\n", item.Name, item.Address, item.Logon, item.Sytem, item.Pack, item.Version);
+			sb.AppendFormat("{0},{1},{2:yyyy-MM-dd HH:mm},{3},{4},{5}\r\n",
+				item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
+			);
 		}
-		System.IO.File.WriteAllText(file, sb.ToString());
+		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") +".csv", sb.ToString());
 	}
 
 	public static List<Computer> GetComputers(string domain)
 	{
-		var auths = new List<AuthenticablePrincipal>();
-
-		using (var context = new PrincipalContext(ContextType.Domain, domain))
-		{
-			using (var searcher = new PrincipalSearcher(new ComputerPrincipal(context)))
-			{
-				foreach (var result in searcher.FindAll())
-				{
-					var auth = result as AuthenticablePrincipal;
-					if (auth != null)
-						auths.Add(auth);
-				}
-			}
-		}
-
 		var list = new List<Computer>();
 		var entry = new DirectoryEntry("LDAP://" + domain);
 		var ds = new DirectorySearcher(entry);
@@ -79,6 +76,8 @@ public class List_Domain_Computers
 				.Replace("Standard", "")
 				.Replace("Datacenter", "")
 				.Replace("Enterprise", "")
+				.Replace("Professional", "")
+				.Replace("Pro", "")
 				.Replace("®", "")
 				.Replace("™", "")
 				.Trim();
@@ -113,14 +112,34 @@ public class List_Domain_Computers
 			var computer = new Computer()
 			{
 				Name = name,
-				Sytem = os,
-				Version = ov,
-				Pack = sp,
+				Os = os,
+				OsVersion = ov,
+				OsPack = sp,
 				Address = ips,
-				Logon = ll,
+				LastLogon = ll,
 			};
 			list.Add(computer);
 			Write(i, all.Length);
+		}
+		using (var context = new PrincipalContext(ContextType.Domain, domain))
+		{
+			using (var searcher = new PrincipalSearcher(new ComputerPrincipal(context)))
+			{
+				foreach (var result in searcher.FindAll())
+				{
+					var auth = result as AuthenticablePrincipal;
+					if (auth != null)
+					{
+						var computer = list.FirstOrDefault(x => x.Name == auth.Name);
+						if (computer == null)
+							continue;
+						computer.LastLogon = auth.LastLogon;
+						computer.SamAccountName = auth.SamAccountName;
+						computer.UserPrincipalName = auth.UserPrincipalName;
+
+					}
+				}
+			}
 		}
 		Console.WriteLine();
 		ds.Dispose();
@@ -131,11 +150,13 @@ public class List_Domain_Computers
 	public class Computer
 	{
 		public string Name;
-		public string Sytem;
-		public string Version;
-		public string Pack;
+		public string Os;
+		public string OsVersion;
+		public string OsPack;
 		public string Address;
-		public DateTime? Logon;
+		public string SamAccountName;
+		public string UserPrincipalName;
+		public DateTime? LastLogon;
 	}
 
 
