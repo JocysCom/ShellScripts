@@ -29,6 +29,8 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -49,6 +51,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+	<PropertyGroup>
+		<AppConfig>App.Transformed.$(Configuration).config</AppConfig>
+	</PropertyGroup>
+
+
   <PropertyGroup>
     <ApplicationIcon>App.ico</ApplicationIcon>
   </PropertyGroup>
@@ -62,6 +69,26 @@
     <TargetZone>LocalIntranet</TargetZone>
   </PropertyGroup>
   <PropertyGroup />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Dev|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Dev\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
+    <OutputPath>bin\Test\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\Resources\Microsoft.Web.XmlTransform.dll</HintPath>
@@ -130,25 +157,33 @@
     <None Include="..\XML_Transform.bat">
       <Link>Scripts\XML_Transform\XML_Transform.bat</Link>
     </None>
+    <None Include="App.Debug.config">
+      <DependentUpon>App.config</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
+    </None>
     <None Include="App.Dev.config">
       <DependentUpon>App.config</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
+      <SubType>Designer</SubType>
     </None>
-    <None Include="App.Live.config">
+    <None Include="App.Release.config">
       <DependentUpon>App.config</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
     </None>
     <None Include="App.Test.config">
       <DependentUpon>App.config</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
     </None>
-    <None Include="App.Transform.Destination.Dev.config">
+    <None Include="App.Transformed.Debug.config">
       <DependentUpon>App.config</DependentUpon>
     </None>
-    <None Include="App.Transform.Destination.Live.config">
+    <None Include="App.Transformed.Dev.config">
       <DependentUpon>App.config</DependentUpon>
     </None>
-    <None Include="App.Transform.Destination.Test.config">
+    <None Include="App.Transformed.Release.config">
       <DependentUpon>App.config</DependentUpon>
     </None>
-    <None Include="App.Transform.Source.config">
+    <None Include="App.Transformed.Test.config">
       <DependentUpon>App.config</DependentUpon>
     </None>
     <None Include="Properties\Settings.settings">
@@ -158,13 +193,13 @@
     <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+      <TransformOnBuild>true</TransformOnBuild>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="App.ico" />
-    <Resource Include="App.Transform.Source.txt">
-      <DependentUpon>App.config</DependentUpon>
-    </Resource>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
@@ -175,7 +210,17 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>if NOT EXIST "$(ProjectDir)App.config" COPY "$(ProjectDir)App.Transform.Destination.Dev.config" "$(ProjectDir)App.config"
-</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
+  <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets. -->
+  <Target Name="BeforeCompile">
+    <!-- Happens after PreBuildEvent but BeforeCompile -->
+    <TransformXml Source="App.config" Transform="App.Debug.config" Destination="App.Transformed.Debug.config" />
+    <TransformXml Source="App.config" Transform="App.Dev.config" Destination="App.Transformed.Dev.config" />
+    <TransformXml Source="App.config" Transform="App.Test.config" Destination="App.Transformed.Test.config" />
+    <TransformXml Source="App.config" Transform="App.Release.config" Destination="App.Transformed.Release.config" />
+  </Target>
 </Project>
