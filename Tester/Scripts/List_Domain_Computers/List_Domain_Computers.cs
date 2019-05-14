@@ -10,7 +10,7 @@ using System.Text;
 public class List_Domain_Computers
 {
 
-	public static void Main(string[] args)
+	public static void ProcessArguments(string[] args)
 	{
 		//for (int i = 0; i < args.Length; i++)
 		//	Console.WriteLine(string.Format("{0}. {1}", i, args[i]));
@@ -172,7 +172,6 @@ public class List_Domain_Computers
 		public string UserPrincipalName;
 		public DateTime? LastLogon;
 	}
-
 
 
 	public static void Write(int i, int max)

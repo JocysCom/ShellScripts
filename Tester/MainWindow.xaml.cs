@@ -45,8 +45,8 @@ namespace JocysCom.XmlTransform.Tester
 
 		private void TransformButton_Click(object sender, RoutedEventArgs e)
 		{
-			var transforms = Program.GetTransforms(FolderTextBox.Text);
-			Program.TransformFolder(transforms, EnvironmentTextBox.Text);
+			var transforms = XML_Transform.GetTransforms(FolderTextBox.Text);
+			XML_Transform.TransformFolder(transforms, EnvironmentTextBox.Text);
 			StatusLabel.Content = string.Format("{0:yyyy-MM-dd HH:mm:ss}: Done", DateTime.Now);
 		}
 	}
