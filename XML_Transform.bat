@@ -60,5 +60,5 @@ Set-ExecutionPolicy RemoteSigned; ^
 $source = Get-Content -Raw -Path '%csFile%'; ^
 Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%f1%','%u1%','%u2%','%u3%'); ^
 $args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
-[XML_Transform]::ProcessArguments($args)
+[%file%]::ProcessArguments($args)
 GOTO:EOF

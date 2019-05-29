@@ -28,10 +28,11 @@ public class List_Cipher_Suites
 	// Cipher string:
 	// TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_P384
 	// ---------------------------------------      Cipher Suite
-	//     -----                                    Key Exchange
-	//           -----                              Signature
-	//                      -----------             Bulk Encryption
-	//                                  ------      Message Authentication
+	// ---                                          Protocol
+	//     -----                                    Key Exchange mechanism
+	//           -----                              Signature, algorithm of the authentication key
+	//                      -----------             Bulk Encryption (algorithm + key size in bits + mode)
+	//                                  ------      Message Authentication, MAC
 	//                                         ---- Elliptic Curve
 
 	public static void ProcessArguments(string[] args)
