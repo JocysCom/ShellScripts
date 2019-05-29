@@ -7,10 +7,10 @@ using System.Linq;
 using System.Configuration;
 using System.Configuration.Install;
 
-public class Program
+public class Backup_and_Restore_Dates
 {
 
-	public static void Main(string[] args)
+	public static void ProcessArguments(string[] args)
 	{
 		//for (int i = 0; i < args.Length; i++)
 		// Console.WriteLine(string.Format("{0}. {1}", i, args[i]));

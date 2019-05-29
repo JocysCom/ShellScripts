@@ -31,17 +31,11 @@ GOTO:EOF
 ::-------------------------------------------------------------
 
 SETLOCAL
+TITLE List Cipher Suites
 :: %~n0 - filename without extension.
 SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
-:: <script> <working_folder> <pattern> <data_file>
-CALL:PS "/s=%~0" "/f=.\" "/p=*.*" "/d=%cdir%%file%.dates.txt"
-ECHO.
-pause
-GOTO:EOF
-
-:PS
 :: Run script.
 SET csFile=%cdir%%file%.cs
 SET u1=System.Configuration
@@ -49,9 +43,8 @@ SET u2=System.Configuration.Install
 SET u3=System.Xml
 :: Run script.
 PowerShell.exe ^
-Set-ExecutionPolicy RemoteSigned; ^
 $source = Get-Content -Raw -Path '%csFile%'; ^
 Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%'); ^
 $args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
 [%file%]::ProcessArguments($args)
-GOTO:EOF
+pause

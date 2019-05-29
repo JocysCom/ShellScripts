@@ -3,10 +3,10 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class Program
+public class Multi_Threading_Test
 {
 	// Test speed of different asynchronous call types.
-	public static void Main(string[] args)
+	public static void ProcessArguments(string[] args)
 	{
 		var tests = 25;
 		var calls = 2000;

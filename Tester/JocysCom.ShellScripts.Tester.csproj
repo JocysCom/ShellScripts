@@ -51,11 +51,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-	<PropertyGroup>
-		<AppConfig>App.Transformed.$(Configuration).config</AppConfig>
-	</PropertyGroup>
-
-
+  <PropertyGroup>
+    <AppConfig>App.Transformed.$(Configuration).config</AppConfig>
+  </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>App.ico</ApplicationIcon>
   </PropertyGroup>
@@ -119,7 +117,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.cs" />
+    <Compile Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.cs" />
     <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
+    <Compile Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.cs" />
+    <Compile Include="Scripts\Test_SSL_Support\Test_SSL_Support.cs" />
+    <Compile Include="Scripts\XML_Format\XML_Format.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -190,7 +193,12 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.bat" />
+    <None Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.bat" />
     <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
+    <None Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.bat" />
+    <None Include="Scripts\Test_SSL_Support\Test_SSL_Support.bat" />
+    <None Include="Scripts\XML_Format\XML_Format.bat" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -208,6 +216,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

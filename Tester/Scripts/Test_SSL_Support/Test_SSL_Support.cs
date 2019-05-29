@@ -6,10 +6,10 @@ using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
-public class Program
+public class Test_SSL_Support
 {
 
-	public static void Main(string[] args)
+	public static void ProcessArguments(string[] args)
 	{
 		//for (int i = 0; i < args.Length; i++)
 		//	Console.WriteLine(string.Format("{0}. {1}", i, args[i]));

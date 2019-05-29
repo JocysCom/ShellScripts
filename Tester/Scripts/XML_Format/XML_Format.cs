@@ -10,10 +10,10 @@ using System.Text;
 using System.IO;
 using System.Collections.Generic;
 
-public class Program
+public class XML_Format
 {
 
-	public static void Main(string[] args)
+	public static void ProcessArguments(string[] args)
 	{
 		//for (int i = 0; i < args.Length; i++)
 		//	Console.WriteLine(string.Format("{0}. {1}", i, args[i]));
