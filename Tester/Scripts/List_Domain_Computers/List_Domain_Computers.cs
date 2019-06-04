@@ -45,6 +45,8 @@ public class List_Domain_Computers
 		Write(list, "Domain_Other", false, maxs);
 		Console.WriteLine();
 	}
+	
+	static bool outputTypeIsCsv = true;
 
 	static void Write(Computer[] list, string file, bool active, List<int> maxs)
 	{
@@ -58,14 +60,12 @@ public class List_Domain_Computers
 		{
 			var item = list[i];
 			var m = 0;
-			sb.AppendFormat("{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "}  {2,-" + maxs[m++] + ":yyyy-MM-dd HH:mm}  {3,-" + maxs[m++] + "}  {4,-" + maxs[m++] + "}  {5,-" + maxs[m++] + "}\r\n",
-				item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
-			);
-			//sb.AppendFormat("{0,{1},{2:yyyy-MM-dd HH:mm},{3},{4},{5}\r\n",
-			//	item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
-			//);
+			var format = outputTypeIsCsv
+				? "{0},{1},{2:yyyy-MM-dd HH:mm},{3},{4},{5}\r\n"
+				: "{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "}  {2,-" + maxs[m++] + ":yyyy-MM-dd HH:mm}  {3,-" + maxs[m++] + "}  {4,-" + maxs[m++] + "}  {5,-" + maxs[m++] + "}\r\n";
+			sb.AppendFormat(format,	item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion);
 		}
-		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") + ".txt", sb.ToString());
+		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") + (outputTypeIsCsv ? ".csv" : ".txt"), sb.ToString());
 	}
 
 	public static List<Computer> GetComputers(string domain)
@@ -172,6 +172,7 @@ public class List_Domain_Computers
 		public string UserPrincipalName;
 		public DateTime? LastLogon;
 	}
+
 
 
 	public static void Write(int i, int max)
