@@ -232,13 +232,15 @@ public class List_Domain_Computers
 	{
 		try
 		{
+			// NetBIOS UDP 137.
 			CheckNetBios(computer);
-			// RPC
+			// RPC TCP 135.
 			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 135))
 				computer.OpenPort = 135;
-			// RDP
+			// RDP TCP 3389.
 			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 3389))
 				computer.OpenPort = 3389;
+			Console.WriteLine("{0,-16} Port: {1,4}", computer.Name, computer.OpenPort);
 		}
 		catch (Exception ex)
 		{
@@ -270,7 +272,7 @@ public class List_Domain_Computers
 		var addressList = Dns.GetHostAddresses(computer.Name);
 		if (addressList.Length == 0)
 		{
-			Console.WriteLine("NetBIOS: {0} host could not be found.", computer.Name);
+			//Console.WriteLine("NetBIOS: {0} host could not be found.", computer.Name);
 			return;
 		}
 		EndPoint remoteEndpoint = new IPEndPoint(addressList[0], 137);
@@ -286,19 +288,19 @@ public class List_Domain_Computers
 				var deviceName = enc.GetString(receiveBuffer, 57, 16).Trim();
 				var networkName = enc.GetString(receiveBuffer, 75, 16).Trim();
 				computer.OpenPort = 137;
-				Console.WriteLine("NetBIOS: {0} is online.", deviceName);
+				//Console.WriteLine("NetBIOS: {0} is online.", deviceName);
 			}
 		}
 		catch (SocketException)
 		{
-			Console.WriteLine("NetBIOS: {0} could not be identified.", computer.Name);
+			//Console.WriteLine("NetBIOS: {0} could not be identified.", computer.Name);
 		}
 	}
 
 	public static void UpdateIsOnline(Computer[] computers)
 	{
 		Parallel.ForEach(computers,
-		new ParallelOptions { MaxDegreeOfParallelism = 10 },
+		new ParallelOptions { MaxDegreeOfParallelism = 16 },
 		   x => UpdateIsOnline(x)
 		);
 	}
