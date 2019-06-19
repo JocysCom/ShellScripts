@@ -37,15 +37,15 @@ public class List_Domain_Computers
 		maxs.Add(list.Max(x => string.Format("{0}", x.OsVersion).Length));
 		// Flush servers.
 		var servers = list.Where(x => x.Os.Contains("Server")).ToArray();
-		Write(servers, "Domain_Servers", true, maxs);
-		Write(servers, "Domain_Servers", false, maxs);
+		Write(servers, domain + "_Servers", true, maxs);
+		Write(servers, domain + "_Servers", false, maxs);
 		list = list.Except(servers).ToArray();
 		var clients = list.Where(x => x.Os.Contains("Windows")).ToArray();
-		Write(clients, "Domain_Clients", true, maxs);
-		Write(clients, "Domain_Clients", false, maxs);
+		Write(clients, domain + "_Clients", true, maxs);
+		Write(clients, domain + "_Clients", false, maxs);
 		list = list.Except(clients).ToArray();
-		Write(list, "Domain_Other", true, maxs);
-		Write(list, "Domain_Other", false, maxs);
+		Write(list, domain + "_Other", true, maxs);
+		Write(list, domain + "_Other", false, maxs);
 		Console.WriteLine();
 		return 0;
 	}
