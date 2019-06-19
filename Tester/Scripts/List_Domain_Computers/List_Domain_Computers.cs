@@ -24,8 +24,8 @@ public class List_Domain_Computers
 		Console.WriteLine("Domain: {0}", domain);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
 		var list = GetComputers(domain)
-			.OrderBy(x => x.Os).ThenBy(x => x.Name).ToArray();
-		Console.WriteLine("{0} names exported", list.Length);
+			.OrderBy(x => x.Os).ThenBy(x => x.Name).ToList();
+		Console.WriteLine("{0} names exported", list.Count);
 		//item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
 		var maxs = new List<int>();
 		maxs.Add(list.Max(x => string.Format("{0}", x.Name).Length));
@@ -36,41 +36,51 @@ public class List_Domain_Computers
 		maxs.Add(list.Max(x => string.Format("{0}", x.OsPack).Length));
 		maxs.Add(list.Max(x => string.Format("{0}", x.OsVersion).Length));
 		// Flush servers.
-		var servers = list.Where(x => x.Os.Contains("Server")).ToArray();
-		Write(servers, domain + "_Servers", true, maxs);
-		Write(servers, domain + "_Servers", false, maxs);
-		list = list.Except(servers).ToArray();
-		var clients = list.Where(x => x.Os.Contains("Windows")).ToArray();
-		Write(clients, domain + "_Clients", true, maxs);
-		Write(clients, domain + "_Clients", false, maxs);
-		list = list.Except(clients).ToArray();
-		Write(list, domain + "_Other", true, maxs);
-		Write(list, domain + "_Other", false, maxs);
+		var servers = list.Where(x => x.Os.Contains("Server")).ToList();
+		Write(servers, domain + "_Servers", null, maxs);
+		//Write(servers, domain + "_Servers", true, maxs);
+		//Write(servers, domain + "_Servers", false, maxs);
+		list = list.Except(servers).ToList();
+		var clients = list.Where(x => x.Os.Contains("Windows")).ToList();
+		Write(clients, domain + "_Clients", null, maxs);
+		//Write(clients, domain + "_Clients", true, maxs);
+		//Write(clients, domain + "_Clients", false, maxs);
+		list = list.Except(clients).ToList();
+		Write(list, domain + "_Other", null, maxs);
+		//Write(list, domain + "_Other", true, maxs);
+		//Write(list, domain + "_Other", false, maxs);
 		Console.WriteLine();
 		return 0;
 	}
 
 	static bool outputTypeIsCsv = true;
 
-	static void Write(Computer[] list, string file, bool active, List<int> maxs)
+	static void Write(List<Computer> list, string file, bool? active, List<int> maxs)
 	{
 		var sb = new StringBuilder();
 		var now = DateTime.Now;
+		var suffix = "";
 		// Get list of computers which connected in last 5 weeks.
-		var activeList = list.Where(x => x.LastLogon.HasValue && now.Subtract(x.LastLogon.Value) < new TimeSpan(7 * 5, 0, 0, 0, 0)).ToArray();
-		var absentList = list.Except(activeList).ToArray();
-		list = active ? activeList : absentList;
+		var activeList = list.Where(x => x.LastLogon.HasValue && now.Subtract(x.LastLogon.Value) < new TimeSpan(7 * 5, 0, 0, 0, 0)).ToList();
+		if (active.HasValue)
+		{
+			var absentList = list.Except(activeList).ToList();
+			list = active.Value ? activeList : absentList;
+			suffix = active.Value ? "_active" : "_absent";
+		}
 		UpdateIsOnline(list);
-		for (int i = 0; i < list.Length; i++)
+		var m = 0;
+		var format = outputTypeIsCsv
+			? "{0},{1},{2},{3:yyyy-MM-dd HH:mm},{4},{5},{6},{7}\r\n"
+			: "{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "} {2,-" + maxs[m++] + "}  {3,-" + maxs[m++] + ":yyyy-MM-dd HH:mm} {4} {5,-" + maxs[m++] + "}  {6,-" + maxs[m++] + "}  {7,-" + maxs[m++] + "}\r\n";
+		sb.Append("Name,Address,Port,Logon,A,OS,Pack,Version\r\n");
+		for (int i = 0; i < list.Count; i++)
 		{
 			var item = list[i];
-			var m = 0;
-			var format = outputTypeIsCsv
-				? "{0},{1},{2},{3:yyyy-MM-dd HH:mm},{4},{5},{6}\r\n"
-				: "{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "} {2,-" + maxs[m++] + "}  {3,-" + maxs[m++] + ":yyyy-MM-dd HH:mm}  {4,-" + maxs[m++] + "}  {5,-" + maxs[m++] + "}  {6,-" + maxs[m++] + "}\r\n";
-			sb.AppendFormat(format, item.Name, item.Address, item.OpenPort, item.LastLogon, item.Os, item.OsPack, item.OsVersion);
+			var ap = activeList.Contains(item) ? "A" : "P";
+			sb.AppendFormat(format, item.Name, item.Address, item.OpenPort, item.LastLogon, ap, item.Os, item.OsPack, item.OsVersion);
 		}
-		System.IO.File.WriteAllText(file + (active ? "_active" : "_absent") + (outputTypeIsCsv ? ".csv" : ".txt"), sb.ToString());
+		System.IO.File.WriteAllText(file + suffix + (outputTypeIsCsv ? ".csv" : ".txt"), sb.ToString());
 	}
 
 	public static List<Computer> GetComputers(string domain)
@@ -192,8 +202,58 @@ public class List_Domain_Computers
 		Console.Write(s);
 	}
 
-	#region Helper Methods
+	#region Ping
 
+	public static bool Ping(string hostNameOrAddress, int timeout = 1000)
+	{
+		Exception error;
+		return Ping(hostNameOrAddress, timeout, out error);
+	}
+
+	public static bool Ping(string hostNameOrAddress, int timeout, out Exception error)
+	{
+		var success = false;
+		error = null;
+		var sw = new System.Diagnostics.Stopwatch();
+		sw.Start();
+		System.Net.NetworkInformation.PingReply reply = null;
+		Exception replyError = null;
+		// Use proper threading, because other asynchronous classes
+		// like "Tasks" have problems with Ping.
+		var ts = new System.Threading.ThreadStart(delegate ()
+		{
+			var ping = new System.Net.NetworkInformation.Ping();
+			try
+			{
+				reply = ping.Send(hostNameOrAddress);
+			}
+			catch (Exception ex)
+			{
+				replyError = ex;
+			}
+			ping.Dispose();
+		});
+		var t = new System.Threading.Thread(ts);
+		t.Start();
+		t.Join(timeout);
+		if (reply != null)
+		{
+			success = (reply.Status == System.Net.NetworkInformation.IPStatus.Success);
+		}
+		else if (replyError != null)
+		{
+			error = replyError;
+		}
+		else
+		{
+			error = new Exception("Ping timed out (" + timeout.ToString() + "): " + sw.Elapsed.ToString());
+		}
+		return success;
+	}
+
+	#endregion
+
+	#region Helper Methods
 
 
 	public static bool IsPortOpen(string host, int port, int timeout = 2000, int retry = 1)
@@ -226,26 +286,6 @@ public class List_Domain_Computers
 			}
 		}
 		return false;
-	}
-
-	static void UpdateIsOnline(Computer computer)
-	{
-		try
-		{
-			// NetBIOS UDP 137.
-			CheckNetBios(computer);
-			// RPC TCP 135.
-			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 135))
-				computer.OpenPort = 135;
-			// RDP TCP 3389.
-			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 3389))
-				computer.OpenPort = 3389;
-			Console.WriteLine("{0,-16} Port: {1,4}", computer.Name, computer.OpenPort);
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine("{0} Exception: {1}", computer.Name, ex.Message);
-		}
 	}
 
 	// The following byte stream contains the necessary message
@@ -297,13 +337,46 @@ public class List_Domain_Computers
 		}
 	}
 
-	public static void UpdateIsOnline(Computer[] computers)
+	static int UpdateIsOnlineCount;
+	static int UpdateIsOnlineTotal;
+
+	public static void UpdateIsOnline(List<Computer> computers)
 	{
+		UpdateIsOnlineCount = 0;
+		UpdateIsOnlineTotal = computers.Count;
 		Parallel.ForEach(computers,
 		new ParallelOptions { MaxDegreeOfParallelism = 16 },
 		   x => UpdateIsOnline(x)
 		);
 	}
+
+	static void UpdateIsOnline(Computer computer)
+	{
+		try
+		{
+			// NetBIOS UDP 137.
+			CheckNetBios(computer);
+			// RPC TCP 135.
+			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 135))
+				computer.OpenPort = 135;
+			// RDP TCP 3389.
+			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 3389))
+				computer.OpenPort = 3389;
+			// Try to PING.
+			if (computer.OpenPort == 0 && Ping(computer.Name, 2000))
+				computer.OpenPort = 1;
+			// Report.
+			System.Threading.Interlocked.Increment(ref UpdateIsOnlineCount);
+			var percent = (decimal)UpdateIsOnlineCount / (decimal)UpdateIsOnlineTotal * 100m;
+			Console.WriteLine("{0," + UpdateIsOnlineTotal.ToString().Length + "}. {1,-16} Port: {2,4} - {3,5:0.0}%",
+				UpdateIsOnlineCount, computer.Name, computer.OpenPort, percent);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine("{0} Exception: {1}", computer.Name, ex.Message);
+		}
+	}
+
 
 	#endregion
 
