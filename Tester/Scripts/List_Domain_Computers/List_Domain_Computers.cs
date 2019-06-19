@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Configuration.Install;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Serialization;
 
 public class List_Domain_Computers
 {
@@ -23,64 +26,37 @@ public class List_Domain_Computers
 			domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 		Console.WriteLine("Domain: {0}", domain);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
-		var list = GetComputers(domain)
-			.OrderBy(x => x.Os).ThenBy(x => x.Name).ToList();
+		var list = GetComputers(domain);
 		Console.WriteLine("{0} names exported", list.Count);
-		//item.Name, item.Address, item.LastLogon, item.Os, item.OsPack, item.OsVersion
-		var maxs = new List<int>();
-		maxs.Add(list.Max(x => string.Format("{0}", x.Name).Length));
-		maxs.Add(list.Max(x => string.Format("{0}", x.Address).Length));
-		maxs.Add(list.Max(x => string.Format("{0}", x.OpenPort).Length));
-		maxs.Add(list.Max(x => string.Format("{0:yyyy-MM-dd HH:mm}", x.LastLogon).Length));
-		maxs.Add(list.Max(x => string.Format("{0}", x.Os).Length));
-		maxs.Add(list.Max(x => string.Format("{0}", x.OsPack).Length));
-		maxs.Add(list.Max(x => string.Format("{0}", x.OsVersion).Length));
-		// Flush servers.
-		var servers = list.Where(x => x.Os.Contains("Server")).ToList();
-		Write(servers, domain + "_Servers", null, maxs);
-		//Write(servers, domain + "_Servers", true, maxs);
-		//Write(servers, domain + "_Servers", false, maxs);
-		list = list.Except(servers).ToList();
-		var clients = list.Where(x => x.Os.Contains("Windows")).ToList();
-		Write(clients, domain + "_Clients", null, maxs);
-		//Write(clients, domain + "_Clients", true, maxs);
-		//Write(clients, domain + "_Clients", false, maxs);
-		list = list.Except(clients).ToList();
-		Write(list, domain + "_Other", null, maxs);
-		//Write(list, domain + "_Other", true, maxs);
-		//Write(list, domain + "_Other", false, maxs);
+		// Apply types
+		list.Where(x => x.Os.Contains("Windows")).ToList().ForEach(x => x.Type = "Client");
+		list.Where(x => x.Os.Contains("Server")).ToList().ForEach(x => x.Type = "Server");
+		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
+		Write(list, domain + "_computers");
 		Console.WriteLine();
 		return 0;
 	}
 
-	static bool outputTypeIsCsv = true;
-
-	static void Write(List<Computer> list, string file, bool? active, List<int> maxs)
+	static void Write(List<Computer> list, string file, bool? active = null)
 	{
 		var sb = new StringBuilder();
 		var now = DateTime.Now;
 		var suffix = "";
-		// Get list of computers which connected in last 5 weeks.
-		var activeList = list.Where(x => x.LastLogon.HasValue && now.Subtract(x.LastLogon.Value) < new TimeSpan(7 * 5, 0, 0, 0, 0)).ToList();
+		if (active.HasValue)
+			suffix = active.Value ? "_active" : "_passive";
+		var fileName = file + suffix + ".xls";
+		Console.WriteLine("{0}: Test", fileName);
+		UpdateIsOnline(list);
 		if (active.HasValue)
 		{
+			var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
 			var absentList = list.Except(activeList).ToList();
 			list = active.Value ? activeList : absentList;
-			suffix = active.Value ? "_active" : "_absent";
 		}
-		UpdateIsOnline(list);
-		var m = 0;
-		var format = outputTypeIsCsv
-			? "{0},{1},{2},{3:yyyy-MM-dd HH:mm},{4},{5},{6},{7}\r\n"
-			: "{0,-" + maxs[m++] + "}  {1,-" + maxs[m++] + "} {2,-" + maxs[m++] + "}  {3,-" + maxs[m++] + ":yyyy-MM-dd HH:mm} {4} {5,-" + maxs[m++] + "}  {6,-" + maxs[m++] + "}  {7,-" + maxs[m++] + "}\r\n";
-		sb.Append("Name,Address,Port,Logon,A,OS,Pack,Version\r\n");
-		for (int i = 0; i < list.Count; i++)
-		{
-			var item = list[i];
-			var ap = activeList.Contains(item) ? "A" : "P";
-			sb.AppendFormat(format, item.Name, item.Address, item.OpenPort, item.LastLogon, ap, item.Os, item.OsPack, item.OsVersion);
-		}
-		System.IO.File.WriteAllText(file + suffix + (outputTypeIsCsv ? ".csv" : ".txt"), sb.ToString());
+		Console.WriteLine("{0}: Write", fileName);
+		var table = new Table();
+		table.Rows = list;
+		Serialize(table, fileName);
 	}
 
 	public static List<Computer> GetComputers(string domain)
@@ -146,7 +122,7 @@ public class List_Domain_Computers
 				OsPack = sp,
 				Address = ips,
 				LastLogon = ll,
-				OpenPort = 0,
+				OpenPort = null,
 			};
 			list.Add(computer);
 			Write(i, all.Length);
@@ -163,7 +139,15 @@ public class List_Domain_Computers
 						var computer = list.FirstOrDefault(x => x.Name == auth.Name);
 						if (computer == null)
 							continue;
-						computer.LastLogon = auth.LastLogon;
+						if (auth.LastLogon.HasValue)
+						{
+							var dateTime = auth.LastLogon.Value;
+							dateTime = new DateTime(
+								dateTime.Ticks - (dateTime.Ticks % TimeSpan.TicksPerMinute),
+								dateTime.Kind
+							);
+							computer.LastLogon = dateTime;
+						}
 						computer.SamAccountName = auth.SamAccountName;
 						computer.UserPrincipalName = auth.UserPrincipalName;
 
@@ -176,20 +160,6 @@ public class List_Domain_Computers
 		entry.Dispose();
 		return list;
 	}
-
-	public class Computer
-	{
-		public string Name;
-		public string Os;
-		public string OsVersion;
-		public string OsPack;
-		public string Address;
-		public string SamAccountName;
-		public string UserPrincipalName;
-		public DateTime? LastLogon;
-		public int OpenPort;
-	}
-
 
 	public static void Write(int i, int max)
 	{
@@ -304,7 +274,7 @@ public class List_Domain_Computers
 	/// Request NetBios name on UDP port 137. 
 	/// </summary>
 	/// <returns></returns>
-	static void CheckNetBios(Computer computer)
+	static bool CheckNetBios(Computer computer)
 	{
 		var receiveBuffer = new byte[1024];
 		var requestSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -313,7 +283,7 @@ public class List_Domain_Computers
 		if (addressList.Length == 0)
 		{
 			//Console.WriteLine("NetBIOS: {0} host could not be found.", computer.Name);
-			return;
+			return false;
 		}
 		EndPoint remoteEndpoint = new IPEndPoint(addressList[0], 137);
 		var originEndpoint = new IPEndPoint(IPAddress.Any, 0);
@@ -327,7 +297,7 @@ public class List_Domain_Computers
 				var enc = new ASCIIEncoding();
 				var deviceName = enc.GetString(receiveBuffer, 57, 16).Trim();
 				var networkName = enc.GetString(receiveBuffer, 75, 16).Trim();
-				computer.OpenPort = 137;
+				return true;
 				//Console.WriteLine("NetBIOS: {0} is online.", deviceName);
 			}
 		}
@@ -335,6 +305,7 @@ public class List_Domain_Computers
 		{
 			//Console.WriteLine("NetBIOS: {0} could not be identified.", computer.Name);
 		}
+		return false;
 	}
 
 	static int UpdateIsOnlineCount;
@@ -355,16 +326,17 @@ public class List_Domain_Computers
 		try
 		{
 			// NetBIOS UDP 137.
-			CheckNetBios(computer);
+			if (CheckNetBios(computer))
+				computer.OpenPort = "UDP/137";
 			// RPC TCP 135.
-			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 135))
-				computer.OpenPort = 135;
+			if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 135))
+				computer.OpenPort = "TCP/135";
 			// RDP TCP 3389.
-			if (computer.OpenPort == 0 && IsPortOpen(computer.Name, 3389))
-				computer.OpenPort = 3389;
+			if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 3389))
+				computer.OpenPort = "TCP/3389";
 			// Try to PING.
-			if (computer.OpenPort == 0 && Ping(computer.Name, 2000))
-				computer.OpenPort = 1;
+			if (string.IsNullOrEmpty(computer.OpenPort) && Ping(computer.Name, 2000))
+				computer.OpenPort = "ICMP";
 			// Report.
 			System.Threading.Interlocked.Increment(ref UpdateIsOnlineCount);
 			var percent = (decimal)UpdateIsOnlineCount / (decimal)UpdateIsOnlineTotal * 100m;
@@ -377,6 +349,45 @@ public class List_Domain_Computers
 		}
 	}
 
+	#endregion
+
+	#region Serialize
+
+	[XmlRoot("table")]
+	public class Table
+	{
+		[XmlElement("row")]
+		public List<Computer> Rows { get; set; }
+	}
+
+	public class Computer
+	{
+		public string Type { get; set; }
+		public string Name { get; set; }
+		public string Address { get; set; }
+		public string Os { get; set; }
+		public string OsVersion { get; set; }
+		public string OsPack { get; set; }
+		[XmlIgnore] public string SamAccountName { get; set; }
+		[XmlIgnore] public string UserPrincipalName { get; set; }
+		public DateTime? LastLogon { get; set; }
+		public string OpenPort { get; set; }
+	}
+
+	static void Serialize<T>(T o, string path)
+	{
+		var settings = new XmlWriterSettings();
+		//settings.OmitXmlDeclaration = true;
+		settings.Encoding = System.Text.Encoding.UTF8;
+		settings.Indent = true;
+		settings.IndentChars = "\t";
+		var serializer = new XmlSerializer(typeof(T));
+		// Serialize in memory first, so file will be locked for shorter times.
+		var ms = new MemoryStream();
+		var xw = XmlWriter.Create(ms, settings);
+		serializer.Serialize(xw, o);
+		File.WriteAllBytes(path, ms.ToArray());
+	}
 
 	#endregion
 
