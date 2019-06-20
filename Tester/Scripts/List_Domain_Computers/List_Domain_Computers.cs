@@ -26,9 +26,10 @@ public class List_Domain_Computers
 			domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 		Console.WriteLine("Domain: {0}", domain);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
+		//GetVirtualMachines(domain);
 		var list = GetComputers(domain);
 		Console.WriteLine("{0} names exported", list.Count);
-		// Apply types
+		// Apply types.
 		list.Where(x => x.Os.Contains("Windows")).ToList().ForEach(x => x.Type = "Client");
 		list.Where(x => x.Os.Contains("Server")).ToList().ForEach(x => x.Type = "Server");
 		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
@@ -47,16 +48,47 @@ public class List_Domain_Computers
 		var fileName = file + suffix + ".xls";
 		Console.WriteLine("{0}: Test", fileName);
 		UpdateIsOnline(list);
+		var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
 		if (active.HasValue)
 		{
-			var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
 			var absentList = list.Except(activeList).ToList();
 			list = active.Value ? activeList : absentList;
+		}
+		for (int i = 0; i < activeList.Count; i++)
+		{
+			var item = activeList[i];
+			Console.WriteLine("{0}. Check SQL Instance: {1} {2}", i, item.Address, item.Name);
+			// Fill SQL instance.
+			item.SqlInstance = string.Join(";", GetSqlInstances(item.Address));
 		}
 		Console.WriteLine("{0}: Write", fileName);
 		var table = new Table();
 		table.Rows = list;
 		Serialize(table, fileName);
+	}
+
+	public static List<string> GetVirtualMachines(string domain)
+	{
+		var list = new List<string>();
+		var entry = new DirectoryEntry("LDAP://" + domain);
+		var ds = new DirectorySearcher(entry);
+		ds.Filter = "(&(objectClass=serviceConnectionPoint)(CN=Windows Virtual Machine))";
+		ds.SizeLimit = int.MaxValue;
+		ds.PageSize = int.MaxValue;
+		var all = ds.FindAll().Cast<SearchResult>().ToArray();
+		Console.Write("Progress: ");
+		for (int i = 0; i < all.Length; i++)
+		{
+			var result = all[i];
+			var sr = result.GetDirectoryEntry();
+			var name = sr.Name;
+			var cn = string.Format("{0}", sr.Properties["CanonicalName"].Value);
+			var dn = string.Format("{0}", sr.Properties["DistinguishedName"].Value);
+
+			Console.WriteLine("{0} - {1} - {2}", dn, name, cn);
+			list.Add(cn);
+		}
+		return list;
 	}
 
 	public static List<Computer> GetComputers(string domain)
@@ -161,6 +193,84 @@ public class List_Domain_Computers
 		return list;
 	}
 
+
+	public static List<string> GetSqlInstances(string machineName)
+	{
+		var list = new List<string>();
+		var serverKeyName = @"SOFTWARE\Microsoft\Microsoft SQL Server";
+		var type = Microsoft.Win32.RegistryHive.LocalMachine;
+		var regKey = Microsoft.Win32.RegistryKey.OpenRemoteBaseKey(type, machineName);
+		var serverKey = regKey.OpenSubKey(serverKeyName);
+		if (serverKey != null)
+		{
+			// For 32 bit instances on a 64 bit OS:
+			// SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL	
+			var instancesKeyName = @"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL";
+			//Console.WriteLine(instancesKeyName);
+			var instancesKey = regKey.OpenSubKey(instancesKeyName);
+			if (instancesKey == null)
+			{
+				//Console.WriteLine("SQL Server instances not found on {0} server.", machineName);
+			}
+			else
+			{
+				foreach (var instanceValueName in instancesKey.GetValueNames())
+				{
+					var instanceValueData = instancesKey.GetValue(instanceValueName);
+					//Console.WriteLine("{0}={1}", instanceValueName, instanceValueData);
+					var setupKeyName = serverKey + "\\" + instanceValueData + "\\Setup";
+					//Console.WriteLine("{0}", setupKeyName);
+					var setupKey = serverKey.OpenSubKey(instanceValueData + "\\Setup");
+					if (setupKey == null)
+					{
+						//Console.WriteLine("SQL Server instance setup key not found on {0} server.", machineName);
+					}
+					var version = (string)setupKey.GetValue("Version");
+					var patchLevel = (string)setupKey.GetValue("PatchLevel");
+					var edition = (string)setupKey.GetValue("Edition");
+					var productCode = (string)setupKey.GetValue("ProductCode");
+					var sp = (int)setupKey.GetValue("SP");
+					var sps = sp > 0 ? string.Format("SP{0}", sp) : "";
+					var uninstallKeyName = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + productCode;
+					var uninstallKey = regKey.OpenSubKey(uninstallKeyName);
+					var displayName = "SQL Server";
+					if (uninstallKey == null)
+					{
+						//Console.WriteLine("SQL Server uninstall key not found");
+					}
+					else
+					{
+						displayName = (string)uninstallKey.GetValue("DisplayName");
+						//Console.WriteLine("{0}", displayName);
+						uninstallKey.Close();
+					}
+					if (version.StartsWith("15.")) displayName = "SQL Server 2019";
+					if (version.StartsWith("14.")) displayName = "SQL Server 2017";
+					if (version.StartsWith("13.")) displayName = "SQL Server 2016";
+					if (version.StartsWith("12.")) displayName = "SQL Server 2014";
+					if (version.StartsWith("11.")) displayName = "SQL Server 2012";
+					if (version.StartsWith("10.5")) displayName = "SQL Server 2008 R2";
+					if (version.StartsWith("10.4")) displayName = "SQL Server 2008";
+					if (version.StartsWith("10.3")) displayName = "SQL Server 2008";
+					if (version.StartsWith("10.2")) displayName = "SQL Server 2008";
+					if (version.StartsWith("10.1")) displayName = "SQL Server 2008";
+					if (version.StartsWith("10.0")) displayName = "SQL Server 2008";
+					if (version.StartsWith("9.")) displayName = "SQL Server 2005";
+					if (version.StartsWith("8.")) displayName = "SQL Server 2000";
+					// Write the version and edition info to output file
+					var info = displayName + " " + sps + " " + patchLevel;
+					if (!list.Contains(info))
+						list.Add(info);
+					Console.WriteLine("{0}: {1} {2}", instanceValueData, info,  edition);
+					setupKey.Close();
+				}
+				instancesKey.Close();
+			}
+			serverKey.Close();
+		}
+		return list;
+	}
+
 	public static void Write(int i, int max)
 	{
 		var l = max.ToString().Length;
@@ -224,7 +334,6 @@ public class List_Domain_Computers
 	#endregion
 
 	#region Helper Methods
-
 
 	public static bool IsPortOpen(string host, int port, int timeout = 2000, int retry = 1)
 	{
@@ -372,6 +481,8 @@ public class List_Domain_Computers
 		[XmlIgnore] public string UserPrincipalName { get; set; }
 		public DateTime? LastLogon { get; set; }
 		public string OpenPort { get; set; }
+		public string SqlInstance { get; set; }
+
 	}
 
 	static void Serialize<T>(T o, string path)
@@ -392,4 +503,3 @@ public class List_Domain_Computers
 	#endregion
 
 }
-
