@@ -32,6 +32,23 @@ public class List_Domain_Computers
 		// Apply types.
 		list.Where(x => x.Os.Contains("Windows")).ToList().ForEach(x => x.Type = "Client");
 		list.Where(x => x.Os.Contains("Server")).ToList().ForEach(x => x.Type = "Server");
+		// Filter by type.
+		Console.WriteLine();
+		Console.WriteLine("Type:");
+		Console.WriteLine("");
+		Console.WriteLine("    0 - All");
+		Console.WriteLine("    1 - Servers");
+		Console.WriteLine("    2 - Clients");
+		Console.WriteLine();
+		Console.Write("Type Number or press ENTER to exit: ");
+		var key = Console.ReadKey(true);
+		Console.WriteLine(string.Format("{0}", key.KeyChar));
+		if (key.KeyChar == '1')
+			list = list.Where(x => x.Type == "Server").ToList();
+		else if (key.KeyChar == '2')
+			list = list.Where(x => x.Type == "Client").ToList();
+		else if (key.KeyChar != '0')
+			return 0;
 		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
 		Write(list, domain + "_computers");
 		Console.WriteLine();
@@ -261,7 +278,7 @@ public class List_Domain_Computers
 					var info = displayName + " " + sps + " " + patchLevel;
 					if (!list.Contains(info))
 						list.Add(info);
-					Console.WriteLine("{0}: {1} {2}", instanceValueData, info,  edition);
+					Console.WriteLine("{0}: {1} {2}", instanceValueData, info, edition);
 					setupKey.Close();
 				}
 				instancesKey.Close();
@@ -434,6 +451,9 @@ public class List_Domain_Computers
 	{
 		try
 		{
+			// Try to PING first because it won't use and lock local port.
+			if (string.IsNullOrEmpty(computer.OpenPort) && Ping(computer.Name, 2000))
+				computer.OpenPort = "ICMP";
 			// NetBIOS UDP 137.
 			if (CheckNetBios(computer))
 				computer.OpenPort = "UDP/137";
@@ -443,13 +463,10 @@ public class List_Domain_Computers
 			// RDP TCP 3389.
 			if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 3389))
 				computer.OpenPort = "TCP/3389";
-			// Try to PING.
-			if (string.IsNullOrEmpty(computer.OpenPort) && Ping(computer.Name, 2000))
-				computer.OpenPort = "ICMP";
 			// Report.
 			System.Threading.Interlocked.Increment(ref UpdateIsOnlineCount);
 			var percent = (decimal)UpdateIsOnlineCount / (decimal)UpdateIsOnlineTotal * 100m;
-			Console.WriteLine("{0," + UpdateIsOnlineTotal.ToString().Length + "}. {1,-16} Port: {2,4} - {3,5:0.0}%",
+			Console.WriteLine("{0," + UpdateIsOnlineTotal.ToString().Length + "}. {1,-16} Port: {2,8} - {3,5:0.0}%",
 				UpdateIsOnlineCount, computer.Name, computer.OpenPort, percent);
 		}
 		catch (Exception ex)
