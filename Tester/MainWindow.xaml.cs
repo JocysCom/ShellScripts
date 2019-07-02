@@ -1,4 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace JocysCom.XmlTransform.Tester
@@ -34,7 +37,7 @@ namespace JocysCom.XmlTransform.Tester
 		void SaveSettings()
 		{
 			Properties.Settings.Default.FolderTextBoxText = FolderTextBox.Text;
-			Properties.Settings.Default.EnvironmentTextBoxText  = EnvironmentTextBox.Text;
+			Properties.Settings.Default.EnvironmentTextBoxText = EnvironmentTextBox.Text;
 			Properties.Settings.Default.Save();
 		}
 
@@ -49,5 +52,12 @@ namespace JocysCom.XmlTransform.Tester
 			XML_Transform.TransformFolder(transforms, EnvironmentTextBox.Text);
 			StatusLabel.Content = string.Format("{0:yyyy-MM-dd HH:mm:ss}: Done", DateTime.Now);
 		}
+
+		private void ListDomainComputersButton_Click(object sender, RoutedEventArgs e)
+		{
+			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			var result = List_Domain_Computers.ProcessArguments(null);
+		}
 	}
 }
+

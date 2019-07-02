@@ -76,7 +76,14 @@ public class List_Domain_Computers
 			var item = activeList[i];
 			Console.WriteLine("{0}. Check SQL Instance: {1} {2}", i, item.Address, item.Name);
 			// Fill SQL instance.
-			item.SqlInstance = string.Join(";", GetSqlInstances(item.Address));
+			try
+			{
+				item.SqlInstance = string.Join(";", GetSqlInstances(item.Address));
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Exception: {0}", ex.Message);
+			}
 		}
 		Console.WriteLine("{0}: Write", fileName);
 		var table = new Table();

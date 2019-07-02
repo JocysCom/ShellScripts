@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Jocys.com XML Transform Tester" Height="240" Width="640" Icon="App.ico" Closing="Window_Closing">
-	<Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        Title="Jocys.com XML Transform Tester" Height="336" Width="640" Icon="App.ico" Closing="Window_Closing">
+	<Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0,0,0,2">
 		<GroupBox Header="Transform Folder" Height="auto" Margin="8" Padding="8" VerticalAlignment="Top">
 			<Grid >
 				<Grid.ColumnDefinitions>
@@ -28,5 +28,7 @@
 				<Label x:Name="StatusLabel" Content="" Grid.Row="2" Grid.Column="1"/>
 			</Grid>
 		</GroupBox>
+		<Button x:Name="ListDomainComputersButton" Content="List Domain Computers" Margin="10,130,0,0" Padding="8,0,8,0" Click="ListDomainComputersButton_Click" HorizontalAlignment="Left" Width="148" Height="20" VerticalAlignment="Top" />
+		
 	</Grid>
 </Window>
