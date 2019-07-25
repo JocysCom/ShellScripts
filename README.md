@@ -1,6 +1,6 @@
 # Usefull Shell Scripts
 
-As a C# developer I like to run pure C# as a script instead of using PowerShell as a procxy.
+As a C# developer I like to run pure C# as a script instead of using PowerShell as a proxy. :)
 
 ## XML Transform - [Wiki...](https://github.com/JocysCom/ShellScripts/wiki/XML-Transform) 
 
