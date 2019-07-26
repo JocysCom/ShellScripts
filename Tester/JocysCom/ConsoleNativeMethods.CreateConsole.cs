@@ -8,46 +8,6 @@ namespace JocysCom.ClassLibrary.Runtime
 	public class ConsoleNativeMethods
 	{
 
-		[DllImport("user32.dll")]
-		public static extern IntPtr GetForegroundWindow();
-
-		/// <summary>
-		/// Attaches the calling process to the console of the specified process.
-		/// </summary>
-		/// <param name="dwProcessId">[in] Identifier of the process, usually will be ATTACH_PARENT_PROCESS</param>
-		/// <returns>If the function succeeds, the return value is nonzero.
-		/// If the function fails, the return value is zero.
-		/// To get extended error information, call Marshal.GetLastWin32Error.
-		/// </returns>
-		[DllImport("kernel32", SetLastError = true)]
-		public static extern bool AttachConsole(int dwProcessId);
-
-		[DllImport("kernel32.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Auto, SetLastError = true)]
-		public static extern int GetConsoleScreenBufferInfo(IntPtr hConsoleOutput, ref ConsoleScreenBufferInfo lpConsoleScreenBufferInfo);
-
-		[DllImport("user32.dll", SetLastError = true)]
-		public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
-
-		[DllImport("kernel32.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Auto, SetLastError = true)]
-		public static extern IntPtr GetStdHandle(int nStdHandle);
-
-		/// <summary>Returns true if the current application has focus, false otherwise.</summary>
-		public static bool ApplicationIsActivated()
-		{
-			var activatedHandle = GetForegroundWindow();
-			if (activatedHandle == IntPtr.Zero)
-			{
-				// No window is currently activated
-				return false;
-			}
-			var procId = System.Diagnostics.Process.GetCurrentProcess().Id;
-			int activeProcId;
-			GetWindowThreadProcessId(activatedHandle, out activeProcId);
-			return activeProcId == procId;
-		}
-
-		// -----------------------------------------------------------
-
 		/// <summary>
 		/// Allocates a new console for the calling process.
 		/// </summary>

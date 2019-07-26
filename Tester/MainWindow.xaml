@@ -29,6 +29,8 @@
 			</Grid>
 		</GroupBox>
 		<Button x:Name="ListDomainComputersButton" Content="List Domain Computers" Margin="10,130,0,0" Padding="8,0,8,0" Click="ListDomainComputersButton_Click" HorizontalAlignment="Left" Width="148" Height="20" VerticalAlignment="Top" />
-		
+		<Button x:Name="ConfigFilesReportButton" Content="Config Files Report" Margin="163,130,0,0" Padding="8,0,8,0" Click="ConfigFilesReportButton_Click" HorizontalAlignment="Left" Width="148" Height="20" VerticalAlignment="Top" />
+		<Button x:Name="HmacForSqlButton" Content="HMAC for SQL" Margin="10,155,0,0" Padding="8,0,8,0" Click="HmacForSqlButton_Click" HorizontalAlignment="Left" Width="148" Height="20" VerticalAlignment="Top" />
+
 	</Grid>
 </Window>

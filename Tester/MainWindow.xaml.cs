@@ -53,10 +53,22 @@ namespace JocysCom.XmlTransform.Tester
 			StatusLabel.Content = string.Format("{0:yyyy-MM-dd HH:mm:ss}: Done", DateTime.Now);
 		}
 
+		private void ConfigFilesReportButton_Click(object sender, RoutedEventArgs e)
+		{
+			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			var result = Config_Files_Report.ProcessArguments(null);
+		}
+
 		private void ListDomainComputersButton_Click(object sender, RoutedEventArgs e)
 		{
 			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
 			var result = List_Domain_Computers.ProcessArguments(null);
+		}
+
+		private void HmacForSqlButton_Click(object sender, RoutedEventArgs e)
+		{
+			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			var result = HMAC_for_SQL.ProcessArguments(null);
 		}
 	}
 }

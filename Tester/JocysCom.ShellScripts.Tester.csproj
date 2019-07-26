@@ -118,9 +118,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="JocysCom\ConsoleNativeMethods.cs" />
+    <Compile Include="JocysCom\ConsoleNativeMethods.CreateConsole.cs" />
     <Compile Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.cs" />
     <Compile Include="Scripts\Config_Files_Report\Config_Files_Report.cs" />
+    <Compile Include="Scripts\HMAC_for_SQL\HMAC_for_SQL.cs" />
     <Compile Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.cs" />
     <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
     <Compile Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.cs" />
@@ -198,6 +199,7 @@
     </None>
     <None Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.bat" />
     <None Include="Scripts\Config_Files_Report\Config_Files_Report.bat" />
+    <None Include="Scripts\HMAC_for_SQL\HMAC_for_SQL.bat" />
     <None Include="Scripts\IIS_ListLogFolders\IIS_ListLogFolders.bat" />
     <None Include="Scripts\IIS_ListLogFolders\IIS_ListLogFolders.ps1" />
     <None Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.bat" />
