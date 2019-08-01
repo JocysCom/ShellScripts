@@ -1,7 +1,5 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace JocysCom.XmlTransform.Tester
@@ -46,6 +44,16 @@ namespace JocysCom.XmlTransform.Tester
 			SaveSettings();
 		}
 
+		void Prepare<T>()
+		{
+			var location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+			var fi = new System.IO.FileInfo(location);
+			var dir = fi.Directory.Parent.Parent;
+			var path = Path.Combine(dir.FullName, "Scripts", typeof(T).Name);
+			System.IO.Directory.SetCurrentDirectory(path);
+			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+		}
+
 		private void TransformButton_Click(object sender, RoutedEventArgs e)
 		{
 			var transforms = XML_Transform.GetTransforms(FolderTextBox.Text);
@@ -55,20 +63,32 @@ namespace JocysCom.XmlTransform.Tester
 
 		private void ConfigFilesReportButton_Click(object sender, RoutedEventArgs e)
 		{
-			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			Prepare<Config_Files_Report>();
 			var result = Config_Files_Report.ProcessArguments(null);
 		}
 
 		private void ListDomainComputersButton_Click(object sender, RoutedEventArgs e)
 		{
-			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			Prepare<List_Domain_Computers>();
 			var result = List_Domain_Computers.ProcessArguments(null);
 		}
 
 		private void HmacForSqlButton_Click(object sender, RoutedEventArgs e)
 		{
-			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			Prepare<HMAC_for_SQL>();
 			var result = HMAC_for_SQL.ProcessArguments(null);
+		}
+
+		private void TestDomainsButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<Test_Domains>();
+			var result = Test_Domains.ProcessArguments(null);
+		}
+
+		private void TestSSLSupportButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<Test_SSL_Support>();
+			var result = Test_SSL_Support.ProcessArguments(null);
 		}
 	}
 }

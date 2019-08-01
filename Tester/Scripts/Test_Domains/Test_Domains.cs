@@ -102,7 +102,12 @@ public class Test_Domains
 		{
 			Console.Write("  DNS... ");
 			var he = System.Net.Dns.GetHostEntry(host);
-			var ips = he.AddressList.Select(x => string.Join(".", x.GetAddressBytes().Select(y => ((int)y).ToString()).ToArray())).ToArray();
+			var ips = he.AddressList
+				// Order to make sure that results are more consistent.
+				.OrderBy(x=>x)
+				.Select(x => string.Join(".", x.GetAddressBytes().Select(y => ((int)y).ToString())
+				.ToArray()))
+				.ToArray();
 			if (ips.Length == 0)
 			{
 				Console.WriteLine("Error: Host IP address is not available.");
