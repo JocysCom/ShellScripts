@@ -23,25 +23,27 @@ public class Test_Domains
 			line = lines[i].Trim();
 			if (string.IsNullOrEmpty(line))
 				continue;
-			var names = new string[] { line, "www." + line };
+			var names = new string[] { line };
+			// names = new string[] { line, "www." + line };
 			foreach (var name  in names)
 			{
 				Console.WriteLine(name);
 				var info = new DomainInfo();
 				info.Name = name;
+				var testWeb = true;
 				//-------------------------------------------------
 				info.Address = string.Join("|", CheckDns(info.Name));
 				if (!string.IsNullOrEmpty(info.Address))
 				{
-					info.Ping = Ping(info.Name);
-					info.HTTP = IsPortOpen(info.Name, 80, 4000);
-					if (info.HTTP)
+					info.Ping = Ping(info.Name) ? "Yes" : "";
+					info.HTTP = IsPortOpen(info.Name, 80, 4000) ? "Yes" : ""; ;
+					if (info.HTTP == "Yes" && testWeb)
 					{
 						info.HTTP_Status = CheckHttp("http://" + info.Name);
 						info.HTTP_Redirect = CheckRedirect("http://" + info.Name);
 					}
-					info.HTTPS = IsPortOpen(info.Name, 443, 4000);
-					if (info.HTTPS)
+					info.HTTPS = IsPortOpen(info.Name, 443, 4000) ? "Yes" : ""; ;
+					if (info.HTTPS == "Yes" && testWeb)
 					{
 						info.HTTPS_Status = CheckHttp("https://" + info.Name);
 						info.HTTPS_Redirect = CheckRedirect("https://" + info.Name);
@@ -63,11 +65,11 @@ public class Test_Domains
 	{
 		public string Name;
 		public string Address;
-		public bool Ping;
-		public bool HTTP;
+		public string Ping;
+		public string HTTP;
 		public string HTTP_Status;
 		public string HTTP_Redirect;
-		public bool HTTPS;
+		public string HTTPS;
 		public string HTTPS_Status;
 		public string HTTPS_Redirect;
 
