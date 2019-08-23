@@ -43,14 +43,22 @@ public class List_Domain_Computers
 		Console.Write("Type Number or press ENTER to exit: ");
 		var key = Console.ReadKey(true);
 		Console.WriteLine(string.Format("{0}", key.KeyChar));
-		if (key.KeyChar == '1')
+		var suffix = "";
+		if (key.KeyChar == '1'){
 			list = list.Where(x => x.Type == "Server").ToList();
+			suffix = ".Servers";
+		}
 		else if (key.KeyChar == '2')
+		{
 			list = list.Where(x => x.Type == "Client").ToList();
+			suffix = ".Clients";
+		}
 		else if (key.KeyChar != '0')
+		{
 			return 0;
+		}
 		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
-		Write(list, domain + "_computers");
+		Write(list, domain + "_computers" + suffix);
 		Console.WriteLine();
 		return 0;
 	}
