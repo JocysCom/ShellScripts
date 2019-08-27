@@ -94,7 +94,7 @@ public class Test_Domain_TLS_Support
 		for (int i = 0; i < list.Count; i++)
 		{
 			var item = list[i];
-			Console.Write("TLS: {0,16}... ", item.Name);
+			Console.Write("TLS: {0,-16}... ", item.Name);
 			foreach (var key in dict.Keys)
 			{
 				var path = dict[key];
@@ -133,20 +133,20 @@ public class Test_Domain_TLS_Support
 				var isDisabled = el.Count(x => x == 0) == 2 && dl.Count(x => x != null && x != 0) == 2;
 				switch (key)
 				{
-					case "MPTUH": item.MPTUH = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "PCT10": item.PCT10 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "SSL20": item.SSL20 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "SSL30": item.SSL30 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "TLS10": item.TLS10 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "TLS11": item.TLS11 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
-					case "TLS12": item.TLS12 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "MPTUH": item.MPTUH = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "PCT10": item.PCT10 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "SSL20": item.SSL20 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "SSL30": item.SSL30 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "TLS10": item.TLS10 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "TLS11": item.TLS11 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
+					case "TLS12": item.TLS12 = isEnabled ? "+" : (isDisabled ? "-" : " "); break;
 					default:
 						break;
 				}
 			}
 			if (string.IsNullOrEmpty(item.Error))
 			{
-				Console.WriteLine("MPTUH={0,1}, PCT10={1,1}, SSL20={2,1}, SSL30={3,1}, TLS10={4,1}, TLS11={5,1}, TLS12={6,1}",
+				Console.WriteLine("MPTUH({0}) PCT10({1}) SSL20({2}) SSL30({3}) TLS10({4}) TLS11({5}) TLS12({6})",
 					item.MPTUH, item.PCT10, item.SSL20, item.SSL30, item.TLS10, item.TLS11, item.TLS12);
 			}
 			else
