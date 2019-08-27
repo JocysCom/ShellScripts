@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
 using System.DirectoryServices;
-using System.DirectoryServices.AccountManagement;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -12,7 +11,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
-public class List_Domain_Computers
+public class Test_Domain_TLS_Support
 {
 
 	public static int ProcessArguments(string[] args)
@@ -22,114 +21,147 @@ public class List_Domain_Computers
 		// Requires System.Configuration.Installl reference.
 		var ic = new InstallContext(null, args);
 		var domain = ic.Parameters["domain"];
+		var computers = ic.Parameters["computers"];
 		if (string.IsNullOrEmpty(domain))
 			domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 		Console.WriteLine("Domain: {0}", domain);
+		Console.WriteLine("Computers: {0}", computers);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
 		//GetVirtualMachines(domain);
-		var list = GetComputers(domain);
+		var computerList = computers.Split(',', ';').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToArray();
+		var list = GetComputers(domain, computerList);
 		Console.WriteLine("{0} names exported", list.Count);
 		// Apply types.
 		list.Where(x => x.Os.Contains("Windows")).ToList().ForEach(x => x.Type = "Client");
 		list.Where(x => x.Os.Contains("Server")).ToList().ForEach(x => x.Type = "Server");
-		// Filter by type.
-		Console.WriteLine();
-		Console.WriteLine("Type:");
-		Console.WriteLine("");
-		Console.WriteLine("    0 - All");
-		Console.WriteLine("    1 - Servers");
-		Console.WriteLine("    2 - Clients");
-		Console.WriteLine();
-		Console.Write("Type Number or press ENTER to exit: ");
-		var key = Console.ReadKey(true);
-		Console.WriteLine(string.Format("{0}", key.KeyChar));
+		// by default do not filter by server or client.
+		var key = '0';
+		if (computerList.Length == 0)
+		{
+			// Filter by type.
+			Console.WriteLine();
+			Console.WriteLine("Type:");
+			Console.WriteLine("");
+			Console.WriteLine("    0 - All");
+			Console.WriteLine("    1 - Servers");
+			Console.WriteLine("    2 - Clients");
+			Console.WriteLine();
+			Console.Write("Type Number or press ENTER to exit: ");
+			key = Console.ReadKey(true).KeyChar;
+			Console.WriteLine(string.Format("{0}", key));
+			Console.WriteLine();
+		}
 		var suffix = "_domain_computers";
-		if (key.KeyChar == '1'){
+		if (key == '1')
+		{
 			list = list.Where(x => x.Type == "Server").ToList();
 			suffix = "_domain_servers";
 		}
-		else if (key.KeyChar == '2')
+		else if (key == '2')
 		{
 			list = list.Where(x => x.Type == "Client").ToList();
 			suffix = "_domain_clients";
 		}
-		else if (key.KeyChar != '0')
+		else if (key != '0')
 		{
 			return 0;
 		}
-		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
-		Write(list, domain + suffix);
+		list = list.OrderBy(x => x.Name).ToList();
+		// Determine which computers are online firsts.
+		UpdateIsOnline(list);
+		var onlineList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
+		// Gather TLS data from registry.
+		FillTlsData(onlineList);
+		//Console.WriteLine("{0}: Write", fileName);
+		var table = new Table();
+		table.Rows = onlineList;
+		Serialize(table, "TLS" + suffix + ".xml");
 		Console.WriteLine();
 		return 0;
 	}
 
-	static void Write(List<Computer> list, string file, bool? active = null)
+	static void FillTlsData(List<Computer> list)
 	{
-		var sb = new StringBuilder();
-		var now = DateTime.Now;
-		var suffix = "";
-		if (active.HasValue)
-			suffix = active.Value ? "_active" : "_passive";
-		var fileName = file + suffix + ".xls";
-		Console.WriteLine("{0}: Test", fileName);
-		UpdateIsOnline(list);
-		var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
-		if (active.HasValue)
+		var dict = new Dictionary<string, string>();
+		dict.Add("MPTUH", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\Multi-Protocol Unified Hello");
+		dict.Add("PCT10", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\PCT 1.0");
+		dict.Add("SSL20", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0");
+		dict.Add("SSL30", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0");
+		dict.Add("TLS10", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0");
+		dict.Add("TLS11", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1");
+		dict.Add("TLS12", @"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2");
+		var subKeys = new string[] { "Client", "Server" };
+		for (int i = 0; i < list.Count; i++)
 		{
-			var absentList = list.Except(activeList).ToList();
-			list = active.Value ? activeList : absentList;
-		}
-		for (int i = 0; i < activeList.Count; i++)
-		{
-			var item = activeList[i];
-			Console.WriteLine("{0}. Check SQL Instance: {1} {2}", i, item.Address, item.Name);
-			// Fill SQL instance.
-			try
+			var item = list[i];
+			Console.Write("TLS: {0,16}... ", item.Name);
+			foreach (var key in dict.Keys)
 			{
-				item.SqlInstance = string.Join(";", GetSqlInstances(item.Address));
+				var path = dict[key];
+				// Store Enabled and DisabledByDefault values.
+				var el = new List<int?>();
+				var dl = new List<int?>();
+				foreach (var subKey in subKeys)
+				{
+					var ts = new System.Threading.ThreadStart(delegate ()
+					{
+						try
+						{
+							var hklm = Microsoft.Win32.RegistryKey.OpenRemoteBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, item.Name);
+							var regKey = hklm.OpenSubKey(path + "\\" + subKey);
+							if (regKey != null)
+							{
+								var e = (int?)regKey.GetValue("Enabled", null);
+								var d = (int?)regKey.GetValue("DisabledByDefault", null);
+								el.Add(e);
+								dl.Add(d);
+								regKey.Close();
+							}
+							hklm.Close();
+						}
+						catch (Exception ex)
+						{
+							item.Error = ex.Message;
+						}
+					});
+					var t = new System.Threading.Thread(ts);
+					t.Start();
+					t.Join(4000);
+				}
+				// Properly enabled if Enabled = 1 and DisabledByDefault = 0;
+				var isEnabled = el.Count(x => x != null && x != 0) == 2 && dl.Count(x => x == 0) == 2;
+				var isDisabled = el.Count(x => x == 0) == 2 && dl.Count(x => x != null && x != 0) == 2;
+				switch (key)
+				{
+					case "MPTUH": item.MPTUH = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "PCT10": item.PCT10 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "SSL20": item.SSL20 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "SSL30": item.SSL30 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "TLS10": item.TLS10 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "TLS11": item.TLS11 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					case "TLS12": item.TLS12 = isEnabled ? "+" : (isDisabled ? "-" : ""); break;
+					default:
+						break;
+				}
 			}
-			catch (Exception ex)
+			if (string.IsNullOrEmpty(item.Error))
 			{
-				Console.WriteLine("Exception: {0}", ex.Message);
+				Console.WriteLine("MPTUH={0,1}, PCT10={1,1}, SSL20={2,1}, SSL30={3,1}, TLS10={4,1}, TLS11={5,1}, TLS12={6,1}",
+					item.MPTUH, item.PCT10, item.SSL20, item.SSL30, item.TLS10, item.TLS11, item.TLS12);
+			}
+			else
+			{
+				Console.WriteLine(item.Error);
 			}
 		}
-		Console.WriteLine("{0}: Write", fileName);
-		var table = new Table();
-		table.Rows = list;
-		Serialize(table, fileName);
 	}
 
-	public static List<string> GetVirtualMachines(string domain)
-	{
-		var list = new List<string>();
-		var entry = new DirectoryEntry("LDAP://" + domain);
-		var ds = new DirectorySearcher(entry);
-		ds.Filter = "(&(objectClass=serviceConnectionPoint)(CN=Windows Virtual Machine))";
-		ds.SizeLimit = int.MaxValue;
-		ds.PageSize = int.MaxValue;
-		var all = ds.FindAll().Cast<SearchResult>().ToArray();
-		Console.Write("Progress: ");
-		for (int i = 0; i < all.Length; i++)
-		{
-			var result = all[i];
-			var sr = result.GetDirectoryEntry();
-			var name = sr.Name;
-			var cn = string.Format("{0}", sr.Properties["CanonicalName"].Value);
-			var dn = string.Format("{0}", sr.Properties["DistinguishedName"].Value);
-
-			Console.WriteLine("{0} - {1} - {2}", dn, name, cn);
-			list.Add(cn);
-		}
-		return list;
-	}
-
-	public static List<Computer> GetComputers(string domain)
+	public static List<Computer> GetComputers(string domain, params string[] computers)
 	{
 		var list = new List<Computer>();
 		var entry = new DirectoryEntry("LDAP://" + domain);
 		var ds = new DirectorySearcher(entry);
-		//ds.PropertiesToLoad.AddRange(new string[] { "samAccountName", "lastLogon" });
-		ds.Filter = ("(objectClass=computer)");
+		ds.Filter = "(objectClass=computer)";
 		ds.SizeLimit = int.MaxValue;
 		ds.PageSize = int.MaxValue;
 		var all = ds.FindAll().Cast<SearchResult>().ToArray();
@@ -139,31 +171,28 @@ public class List_Domain_Computers
 			var result = all[i];
 			var sr = result.GetDirectoryEntry();
 			var name = sr.Name;
+			if (name.StartsWith("CN="))
+				name = name.Remove(0, "CN=".Length);
+			// If computer filter specified and item is not in the list then continue
+			if (computers.Length > 0 && !computers.Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase)))
+				continue;
 			var os = string.Format("{0}", sr.Properties["OperatingSystem"].Value)
-				.Replace("Standard", "")
-				.Replace("Datacenter", "")
-				.Replace("Enterprise", "")
-				.Replace("Professional", "")
-				.Replace("Business", "")
-				.Replace("PC Edition", "")
-				.Replace("Pro", "")
-				.Replace("®", "")
-				.Replace("™", "")
-				.Trim();
+			.Replace("Standard", "")
+			.Replace("Datacenter", "")
+			.Replace("Enterprise", "")
+			.Replace("Professional", "")
+			.Replace("Business", "")
+			.Replace("PC Edition", "")
+			.Replace("Pro", "")
+			.Replace("®", "")
+			.Replace("™", "")
+			.Trim();
 			var sp = os.Contains("Windows")
 				? string.Format("{0}", sr.Properties["OperatingSystemServicePack"].Value)
 				.Replace("Service Pack ", "SP")
 				.Trim()
 				: "";
 			var ov = string.Format("{0}", sr.Properties["OperatingSystemVersion"].Value).Trim();
-			DateTime? ll = null;
-			//if (sr.Properties["LastLogonTimeStamp"] != null && sr.Properties["LastLogonTimeStamp"].Count > 0)
-			//{
-			//	long lastLogon = (long)sr.Properties["LastLogonTimeStamp"][0];
-			//	ll = DateTime.FromFileTime(lastLogon);
-			//}
-			if (name.StartsWith("CN="))
-				name = name.Remove(0, "CN=".Length);
 			string ips = "";
 			var host = string.Format("{0}.{1}", name, domain);
 			try
@@ -190,39 +219,10 @@ public class List_Domain_Computers
 				OsVersion = ov,
 				OsPack = sp,
 				Address = ips,
-				LastLogon = ll,
 				OpenPort = null,
 			};
 			list.Add(computer);
 			ProgressWrite(i, all.Length);
-		}
-		using (var context = new PrincipalContext(ContextType.Domain, domain))
-		{
-			using (var searcher = new PrincipalSearcher(new ComputerPrincipal(context)))
-			{
-				foreach (var result in searcher.FindAll())
-				{
-					var auth = result as AuthenticablePrincipal;
-					if (auth != null)
-					{
-						var computer = list.FirstOrDefault(x => x.Name == auth.Name);
-						if (computer == null)
-							continue;
-						if (auth.LastLogon.HasValue)
-						{
-							var dateTime = auth.LastLogon.Value;
-							dateTime = new DateTime(
-								dateTime.Ticks - (dateTime.Ticks % TimeSpan.TicksPerMinute),
-								dateTime.Kind
-							);
-							computer.LastLogon = dateTime;
-						}
-						computer.SamAccountName = auth.SamAccountName;
-						computer.UserPrincipalName = auth.UserPrincipalName;
-
-					}
-				}
-			}
 		}
 		Console.WriteLine();
 		ds.Dispose();
@@ -230,83 +230,6 @@ public class List_Domain_Computers
 		return list;
 	}
 
-
-	public static List<string> GetSqlInstances(string machineName)
-	{
-		var list = new List<string>();
-		var serverKeyName = @"SOFTWARE\Microsoft\Microsoft SQL Server";
-		var type = Microsoft.Win32.RegistryHive.LocalMachine;
-		var regKey = Microsoft.Win32.RegistryKey.OpenRemoteBaseKey(type, machineName);
-		var serverKey = regKey.OpenSubKey(serverKeyName);
-		if (serverKey != null)
-		{
-			// For 32 bit instances on a 64 bit OS:
-			// SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL	
-			var instancesKeyName = @"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL";
-			//Console.WriteLine(instancesKeyName);
-			var instancesKey = regKey.OpenSubKey(instancesKeyName);
-			if (instancesKey == null)
-			{
-				//Console.WriteLine("SQL Server instances not found on {0} server.", machineName);
-			}
-			else
-			{
-				foreach (var instanceValueName in instancesKey.GetValueNames())
-				{
-					var instanceValueData = instancesKey.GetValue(instanceValueName);
-					//Console.WriteLine("{0}={1}", instanceValueName, instanceValueData);
-					var setupKeyName = serverKey + "\\" + instanceValueData + "\\Setup";
-					//Console.WriteLine("{0}", setupKeyName);
-					var setupKey = serverKey.OpenSubKey(instanceValueData + "\\Setup");
-					if (setupKey == null)
-					{
-						//Console.WriteLine("SQL Server instance setup key not found on {0} server.", machineName);
-					}
-					var version = (string)setupKey.GetValue("Version");
-					var patchLevel = (string)setupKey.GetValue("PatchLevel");
-					var edition = (string)setupKey.GetValue("Edition");
-					var productCode = (string)setupKey.GetValue("ProductCode");
-					var sp = (int)setupKey.GetValue("SP");
-					var sps = sp > 0 ? string.Format("SP{0}", sp) : "";
-					var uninstallKeyName = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + productCode;
-					var uninstallKey = regKey.OpenSubKey(uninstallKeyName);
-					var displayName = "SQL Server";
-					if (uninstallKey == null)
-					{
-						//Console.WriteLine("SQL Server uninstall key not found");
-					}
-					else
-					{
-						displayName = (string)uninstallKey.GetValue("DisplayName");
-						//Console.WriteLine("{0}", displayName);
-						uninstallKey.Close();
-					}
-					if (version.StartsWith("15.")) displayName = "SQL Server 2019";
-					if (version.StartsWith("14.")) displayName = "SQL Server 2017";
-					if (version.StartsWith("13.")) displayName = "SQL Server 2016";
-					if (version.StartsWith("12.")) displayName = "SQL Server 2014";
-					if (version.StartsWith("11.")) displayName = "SQL Server 2012";
-					if (version.StartsWith("10.5")) displayName = "SQL Server 2008 R2";
-					if (version.StartsWith("10.4")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.3")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.2")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.1")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.0")) displayName = "SQL Server 2008";
-					if (version.StartsWith("9.")) displayName = "SQL Server 2005";
-					if (version.StartsWith("8.")) displayName = "SQL Server 2000";
-					// Write the version and edition info to output file
-					var info = displayName + " " + sps + " " + patchLevel;
-					if (!list.Contains(info))
-						list.Add(info);
-					Console.WriteLine("{0}: {1} {2}", instanceValueData, info, edition);
-					setupKey.Close();
-				}
-				instancesKey.Close();
-			}
-			serverKey.Close();
-		}
-		return list;
-	}
 
 	public static void ProgressWrite(int i, int max)
 	{
@@ -505,6 +428,7 @@ public class List_Domain_Computers
 
 	#region Serialize
 
+
 	[XmlRoot("table")]
 	public class Table
 	{
@@ -521,12 +445,16 @@ public class List_Domain_Computers
 		public string Os { get; set; }
 		public string OsVersion { get; set; }
 		public string OsPack { get; set; }
-		[XmlIgnore] public string SamAccountName { get; set; }
-		[XmlIgnore] public string UserPrincipalName { get; set; }
-		public DateTime? LastLogon { get; set; }
 		public string OpenPort { get; set; }
-		public string SqlInstance { get; set; }
-
+		public string Error { get; set; }
+		// TLS Data.
+		public string MPTUH { get; set; }
+		public string PCT10 { get; set; }
+		public string SSL20 { get; set; }
+		public string SSL30 { get; set; }
+		public string TLS10 { get; set; }
+		public string TLS11 { get; set; }
+		public string TLS12 { get; set; }
 	}
 
 	static void Serialize<T>(T o, string path)
