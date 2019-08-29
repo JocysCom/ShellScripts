@@ -90,6 +90,18 @@ namespace JocysCom.XmlTransform.Tester
 			Prepare<Test_SSL_Support>();
 			var result = Test_SSL_Support.ProcessArguments(null);
 		}
+
+		private void TestDomainTlsSupportButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<Test_Domain_TLS_Support>();
+			var result = Test_Domain_TLS_Support.ProcessArguments(new string[] { "/computers=PC15100" });
+		}
+
+		private void RsaForSqlButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<RSA_for_SQL>();
+			var result = RSA_for_SQL.ProcessArguments();
+		}
 	}
 }
 

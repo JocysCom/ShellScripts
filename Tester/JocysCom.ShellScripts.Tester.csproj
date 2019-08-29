@@ -125,7 +125,9 @@
     <Compile Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.cs" />
     <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
     <Compile Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.cs" />
+    <Compile Include="Scripts\RSA_for_SQL\RSA_for_SQL.cs" />
     <Compile Include="Scripts\Test_Domains\Test_Domains.cs" />
+    <Compile Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.cs" />
     <Compile Include="Scripts\Test_SSL_Support\Test_SSL_Support.cs" />
     <Compile Include="Scripts\XML_Format\XML_Format.cs" />
     <Page Include="MainWindow.xaml">
@@ -206,7 +208,9 @@
     <None Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.bat" />
     <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
     <None Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.bat" />
+    <None Include="Scripts\RSA_for_SQL\RSA_for_SQL.bat" />
     <None Include="Scripts\Test_Domains\Test_Domains.bat" />
+    <None Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.bat" />
     <None Include="Scripts\Test_SSL_Support\Test_SSL_Support.bat" />
     <None Include="Scripts\XML_Format\XML_Format.bat" />
   </ItemGroup>
