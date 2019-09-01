@@ -2,7 +2,7 @@
 
 You can drop **XmlTransfrom.bat** and **XmlTransform.cs** script files into any folder, which contains projects and solutions.
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/FolderList.png) 
+![FolderList](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/FolderList.png) 
 
 If you start **XmlTransform.bat** then it will execute **XmlTransform.cs** C# script, which will:
 
@@ -10,7 +10,7 @@ If you start **XmlTransform.bat** then it will execute **XmlTransform.cs** C# sc
 2. Offer you the choice to which environment you would like to switch.
 3. Transform all configuration files and switch all _App.config_ and _Web.config_ files to environment of your choice.
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/Console.png) 
+![Console](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/Console.png) 
 
 
 ## How to Organize Configuration Files
@@ -20,12 +20,12 @@ Visual Studio provides good way to manage configuration files for different envi
 2. _Web.Debug.config_ file for use in developing environment (contains only transformation changes).
 3. _Web.Release.config_ file for use in production environment (contains only transformation changes).
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/WebConfig.png)
+![WebConfig](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/WebConfig.png)
 
 You can add more environments and there are extensions, which will provide similar functionality for other project types:
 https://marketplace.visualstudio.com/items?itemName=GolanAvraham.ConfigurationTransform
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/VsExtension.jpg](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/VsExtension.jpg)
+![VsExtension](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/VsExtension.jpg)
 
 Good news is that with some extra steps, you can reuse configuration file transform feature in other project types and without using any third party Visual Studio extension.
 
@@ -36,7 +36,7 @@ For example, you can reorganize a litte bit and create:
 Note: You can use File Nesting extension to put files as children of other file.
 https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfig.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfig.png)
+![AppConfig](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/AppConfig.png)
 
 3. Then, add configuration block into _*.csproj_ file, which will create final configuration _App.Transform.Destination.[Dev|Test|Live].config_ files for each environments during project builds:
 
@@ -57,7 +57,7 @@ https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileNesting
 
 You can also exclude _App.config_ from source control:
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfigSourceControl.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/AppConfigSourceControl.png) 
+![AppConfigSourceControl](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/AppConfigSourceControl.png) 
 
 …and add one line to Pre-build event on Project properties, which will restore missing App.config file after you acquire clean Project from the Source Control:
 
@@ -65,7 +65,7 @@ You can also exclude _App.config_ from source control:
 if NOT EXIST "$(ProjectDir)App.config" COPY "$(ProjectDir)App.Transform.Destination.Dev.config" "$(ProjectDir)App.config"
 ```
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/BuildEventScript.png) 
+![BuildEventScript](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/XML_Transform/Images/BuildEventScript.png) 
 
 
 ## What are Benefits of This System?
