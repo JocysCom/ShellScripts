@@ -2,18 +2,15 @@
 
 As a C# developer I like to run pure C# as a script instead of using PowerShell as a proxy. :)
 
-## XML Transform - [Wiki...](https://github.com/JocysCom/ShellScripts/wiki/XML-Transform) 
+### [XML Transform](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/XML_Transform) 
 
 Transform XML Connfiguration files for different environments like Visual Studio does for Web Application Projects.
 
-## List Domain Computers
+[### HMAC Implementation for Microsoft SQL Server](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/HMAC_for_SQL)
 
-Export list of domain computers into file with operating system info.
+[List Domain Computers](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/List_Domain_Computers)
 
-Requries "Remote Server Administration Tools for Windows 10" on Windows 10:
-
-https://www.microsoft.com/en-au/download/details.aspx?id=45520
-
+Export list of domain computers into file with operating system info. Requries "Remote Server Administration Tools for Windows 10" on Windows 10: https://www.microsoft.com/en-au/download/details.aspx?id=45520
 
 
 
