@@ -9,9 +9,9 @@ Transform XML Connfiguration files for different environments like Visual Studio
 ### [HMAC Implementation for Microsoft SQL Server...](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/HMAC_for_SQL)
 
 3 functions implemeted as SQL stored procedure and C# function:
-- Security_HMAC - Implements HMAC algorithm. Supported and tested algorithms: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
-- Security_HashPassword - Returns base64 string which contains random salt and password hash inside. Use SHA-256 algorithm.
-- Security_IsValidPassword - Returns 1 if base64 string and password match. Use SHA-256 algorithm.
+- *Security_HMAC* - Implements HMAC algorithm. Supported and tested algorithms: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
+- *Security_HashPassword* - Returns base64 string which contains random salt and password hash inside. Use SHA-256 algorithm.
+- *Security_IsValidPassword* - Returns 1 if base64 string and password match. Use SHA-256 algorithm.
 
 ### [List Domain Computers...](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/List_Domain_Computers)
 
