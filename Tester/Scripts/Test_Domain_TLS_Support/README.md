@@ -14,4 +14,4 @@ You can drop **Test_Domain_TLS_Support.bat** and **Test_Domain_TLS_Support.cs** 
 
    Protocol status: [+] Enabled, [-] Disabled, [ ] Other State
 
-![https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/TlsSupportResults.png](https://raw.githubusercontent.com/wiki/JocysCom/XmlTransform/Images/TlsSupportResults.png) 
+![TlsSupportResults.png](https://raw.github.com/JocysCom/ShellScripts/master/Tester/Scripts/Test_Domain_TLS_Support/Images/TlsSupportResults.png) 
