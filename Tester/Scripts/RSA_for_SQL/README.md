@@ -24,8 +24,17 @@ RSA key using OAEP padding can encrypt up to X bytes:
 <tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256-bit</td><td align="right">1878</td></tr>
 </table>
 
+# Using RSA double encryption to reach 256-bit security
 
-Example:
+You can generate two key pairs: RSA-3072 (128-bit security) and RSA-4096 (144-bit security), then:
+
+	a) Encrypt up to 342-bytes of data with RSA-3072 public key using OAEP padding, which will produce 384 bytes.
+	b) Encrypt data with RSA-4096 public key again, which will produce 512 bytes of double encrypted data.
+
+You will get 272-bit (128 + 144) strength security.
+
+# SQL Script Examples
+
 ```TSQL
 -- Creating a self-signed certificate.
 CREATE CERTIFICATE SqlTestCertificate01   
