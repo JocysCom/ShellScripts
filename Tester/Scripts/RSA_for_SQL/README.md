@@ -22,7 +22,7 @@ Base64 length from output bytes
 `data_out_base64_bytes=CEILING((4*data_out_bytes/3)/4,1)*4`
 
 <table>
-<tr><th>RSA Key</th><th colspan="2">Strength (bit)</th><th colspan="3">Data (bytes)</th></tr>
+<tr><th>RSA Key</th><th colspan="2">Strength of Key (bit)</th><th colspan="3">Data (bytes)</th></tr>
 <tr><th>Length</th><th>Calculated</th><th>Rounded</th><th>In</th><th>Out</th><th>Out (Base64)</th></tr>
 <tr><td align="right">1024</td><td align="right">80.00</td><td align="right">80</td><td align="right">86</td><td align="right">128</td><td align="right">172</td></tr>
 <tr><td align="right">2048</td><td align="right">110.12</td><td align="right">112</td><td align="right">214</td><td align="right">256</td><td align="right">344</td></tr>
