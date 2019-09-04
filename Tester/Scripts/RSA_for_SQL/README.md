@@ -14,7 +14,7 @@ RSA key using OAEP padding can encrypt up to X bytes:
 `X=(key_length/8) – 42`
 
 <table>
-<tr><th>RSA Key</th><th colspan="2">strength</th><th>Max</th></tr>
+<tr><th>RSA Key</th><th colspan="2">Strength</th><th>Max</th></tr>
 <tr><th>Length</th><th>Calculated</th><th>Rounded</th><th>Data</th></tr>
 <tr><td align="right">1024</td><td align="right">80.00</td><td align="right">80</td><td align="right">86</td></tr>
 <tr><td align="right">2048</td><td align="right">110.12</td><td align="right">112</td><td align="right">214</td></tr>
