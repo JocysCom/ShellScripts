@@ -11,7 +11,7 @@ Round strength value:
 `=ROUND(X/16,0)*16`
 
 RSA key using OAEP padding can encrypt up to X bytes:
-`X=(key_length/8) – 42`
+`=(key_length/8) – 42`
 
 <table>
 <tr><th>RSA Key</th><th colspan="2">Strength</th><th>Max</th></tr>
