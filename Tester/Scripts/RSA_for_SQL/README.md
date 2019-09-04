@@ -9,8 +9,8 @@ Excel Formula:
 `= (1.923*POWER(B6*LN(2),1/3)*POWER(POWER(LN(B6*LN(2)),2),1/3)-4.69)/LN(2)`
 
 <table>
-<tr><th>RSA</td><th colspan="2">Strength (bits)</th></tr>
-<tr><th>Key Length</th><th>Assigned</th><th>Calculated</th></tr>
+<tr><th>RSA Key</td><th colspan="2">Strength (bits)</th></tr>
+<tr><th>Length</th><th>Assigned</th><th>Calculated</th></tr>
 <tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td></tr>
 <tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td></tr>
 <tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td></tr>
