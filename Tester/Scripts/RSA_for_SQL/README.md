@@ -24,12 +24,12 @@ Base64 length from output bytes
 <table>
 <tr><th>RSA Key</th><th colspan="2">Strength (bit)</th><th colspan="3">Data (bytes)</th></tr>
 <tr><th>Length</th><th>Calculated</th><th>Rounded</th><th>In</th><th>Out</th><th>Out (Base64)</th></tr>
-<tr><td align="right">1024</td><td align="right">80.00</td><td align="right">80-bit</td><td align="right">86</td><td align="right">128</td><td align="right">172</td></tr>
-<tr><td align="right">2048</td><td align="right">110.12</td><td align="right">112-bit</td><td align="right">214</td><td align="right">256</td><td align="right">344</td></tr>
-<tr><td align="right">3072</td><td align="right">131.97</td><td align="right">128-bit</td><td align="right">342</td><td align="right">384</td><td align="right">512</td></tr>
-<tr><td align="right">4096</td><td align="right">149.73</td><td align="right">144-bit</td><td align="right">470</td><td align="right">512</td><td align="right">684</td></tr>
-<tr><td align="right">7680</td><td align="right">196.25</td><td align="right">192-bit</td><td align="right">918</td><td align="right">960</td><td align="right">1280</td></tr>
-<tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256-bit</td><td align="right">1878</td><td align="right">1920</td><td align="right">2560</td></tr>
+<tr><td align="right">1024</td><td align="right">80.00</td><td align="right">80</td><td align="right">86</td><td align="right">128</td><td align="right">172</td></tr>
+<tr><td align="right">2048</td><td align="right">110.12</td><td align="right">112</td><td align="right">214</td><td align="right">256</td><td align="right">344</td></tr>
+<tr><td align="right">3072</td><td align="right">131.97</td><td align="right">128</td><td align="right">342</td><td align="right">384</td><td align="right">512</td></tr>
+<tr><td align="right">4096</td><td align="right">149.73</td><td align="right">144</td><td align="right">470</td><td align="right">512</td><td align="right">684</td></tr>
+<tr><td align="right">7680</td><td align="right">196.25</td><td align="right">192</td><td align="right">918</td><td align="right">960</td><td align="right">1280</td></tr>
+<tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256</td><td align="right">1878</td><td align="right">1920</td><td align="right">2560</td></tr>
 </table>
 
 # Using RSA double encryption to reach 256-bit security
