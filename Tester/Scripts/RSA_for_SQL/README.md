@@ -36,8 +36,8 @@ Base64 length from output bytes
 
 You can generate two key pairs: RSA-3072 (128-bit security) and RSA-4096 (144-bit security), then:
 
-	a) Encrypt up to 342-bytes of data with RSA-3072 public key using OAEP padding, which will produce 384 bytes.
-	b) Encrypt data again with RSA-4096 public key, which will produce 512 bytes of double encrypted data.
+1. Encrypt up to 342-bytes of data with RSA-3072 public key using OAEP padding, which will produce 384 bytes.
+2. Encrypt data again with RSA-4096 public key, which will produce 512 bytes of double encrypted data.
 
 You will get 272-bit (128 + 144) strength security.
 
