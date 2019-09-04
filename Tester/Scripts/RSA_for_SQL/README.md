@@ -17,6 +17,7 @@ RSA key using OAEP padding can encrypt up to X bytes:
 <tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td><td align="right">86</td></tr>
 <tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td><td align="right">214</td></tr>
 <tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td><td align="right">342</td></tr>
+<tr><td align="right">4096</td><td align="right">152</td><td align="right">149.73</td><td align="right">470</td></tr>
 <tr><td align="right">7680</td><td align="right">192</td><td align="right">196.25</td><td align="right">918</td></tr>
 <tr><td align="right">15360</td><td align="right">256</td><td align="right">262.62</td><td align="right">1878</td></tr>
 </table>
