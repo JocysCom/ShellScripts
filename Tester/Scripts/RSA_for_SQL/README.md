@@ -1,4 +1,4 @@
-# RSA Implementation for Microsoft SQL Server and C#
+## RSA Implementation for Microsoft SQL Server and C#
 	
 Contains C# methods for importing/exporting Microsoft Private Key Format file (.PVK). PVK is a proprietary Microsoft format that stores a cryptographic private key and can be password-protected. PVK files are used by Microsoft SQL Server.
 
@@ -32,7 +32,7 @@ Base64 length from output bytes
 <tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256</td><td align="right">1878</td><td align="right">1920</td><td align="right">2560</td></tr>
 </table>
 
-# Using RSA double encryption to reach 256-bit security
+## Using RSA double encryption to reach 256-bit security
 
 You can generate two key pairs: RSA-3072 (128-bit security) and RSA-4096 (144-bit security), then:
 
@@ -43,7 +43,7 @@ You will get 272-bit (128 + 144) security strength.
 
 Doubling RSA key size increase encryption speed 6-7 times. Therefore, double encryption (3072 and 4096 key) is 20 times faster than encryption with a single 15360 key (256-bit security). Double encryption is perfect for protecting randomly generated AES-256 keys or passwords.
 
-# SQL Script Examples
+## SQL Script Examples
 
 ```TSQL
 -- Creating a self-signed certificate.
