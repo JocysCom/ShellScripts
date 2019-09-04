@@ -39,7 +39,9 @@ You can generate two key pairs: RSA-3072 (128-bit security) and RSA-4096 (144-bi
 1. Encrypt up to 342-bytes of data with RSA-3072 public key using OAEP padding, which will produce 384 bytes.
 2. Encrypt data again with RSA-4096 public key, which will produce 512 bytes of double encrypted data.
 
-You will get 272-bit (128 + 144) strength security.
+You will get 272-bit (128 + 144) security strength.
+
+Doubling RSA key size increase encryption speed 6-7 times. Therefore, double encryption (3072 and 4096 key) is 20 times faster than encryption with a single 15360 key (256-bit security). Double encryption is perfect for protecting randomly generated AES-256 keys or passwords.
 
 # SQL Script Examples
 
