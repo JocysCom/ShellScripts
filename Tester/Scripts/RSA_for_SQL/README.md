@@ -6,20 +6,22 @@ NIST recommended forumla to calculate RSA key strength could be found in "Implem
 https://csrc.nist.gov/csrc/media/projects/cryptographic-module-validation-program/documents/fips140-2/fips1402ig.pdf
 
 RSA key strength X-bits:
-`= (1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
+`=(1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
+Round strength value:
+`=ROUND(X/16,0)*16`
 
 RSA key using OAEP padding can encrypt up to X bytes:
-`X = (key_length/8) – 42`
+`X=(key_length/8) – 42`
 
 <table>
-<tr><th>RSA Key</td><th colspan="2">Strength (bits)</th><th>Max</th></tr>
-<tr><th>Length</th><th>Assigned</th><th>Calculated</th><th>Data</th></tr>
-<tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td><td align="right">86</td></tr>
-<tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td><td align="right">214</td></tr>
-<tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td><td align="right">342</td></tr>
-<tr><td align="right">4096</td><td align="right">152</td><td align="right">149.73</td><td align="right">470</td></tr>
-<tr><td align="right">7680</td><td align="right">192</td><td align="right">196.25</td><td align="right">918</td></tr>
-<tr><td align="right">15360</td><td align="right">256</td><td align="right">262.62</td><td align="right">1878</td></tr>
+<tr><th>RSA Key</th><th colspan="2">strength</th><th>Max</th></tr>
+<tr><th>Length</th><th>Calculated</th><th>Rounded</th><th>Data</th></tr>
+<tr><td align="right">1024</td><td align="right">80.00</td><td align="right">80</td><td align="right">86</td></tr>
+<tr><td align="right">2048</td><td align="right">110.12</td><td align="right">112</td><td align="right">214</td></tr>
+<tr><td align="right">3072</td><td align="right">131.97</td><td align="right">128</td><td align="right">342</td></tr>
+<tr><td align="right">4096</td><td align="right">149.73</td><td align="right">144</td><td align="right">470</td></tr>
+<tr><td align="right">7680</td><td align="right">196.25</td><td align="right">192</td><td align="right">918</td></tr>
+<tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256</td><td align="right">1878</td></tr>
 </table>
 
 
