@@ -32,7 +32,7 @@ Base64 length from output bytes
 <tr><td align="right">15360</td><td align="right">262.62</td><td align="right">256</td><td align="right">1878</td><td align="right">1920</td><td align="right">2560</td></tr>
 </table>
 
-## Using RSA double encryption to reach 256-bit security
+## Using faster RSA double encryption to reach 256-bit security
 
 You can generate two key pairs: RSA-3072 (128-bit security) and RSA-4096 (144-bit security), then:
 
