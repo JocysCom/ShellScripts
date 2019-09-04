@@ -6,12 +6,15 @@ NIST recommended forumla to calculate RSA key strength could be found in "Implem
 https://csrc.nist.gov/csrc/media/projects/cryptographic-module-validation-program/documents/fips140-2/fips1402ig.pdf
 
 RSA key strength X-bits:
-`=(1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
+`calculated_bits=(1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
 Round strength value:
-`=ROUND(X/16,0)*16`
+`rounded_bits=ROUND(calculated_bits/16,0)*16`
 
 RSA key using OAEP padding can encrypt up to X bytes:
-`=(key_length/8) – 42`
+`data_in_bytes=(key_length/8) – 42`
+`data_out_bytes=(key_length/8)`
+Base64 length from output bytes
+`data_out_base64_bytes=CEILING((4*data_out_bytes/3)/4,1)*4`
 
 <table>
 <tr><th>RSA Key</th><th colspan="2">Strength (bit)</th><th colspan="3">Data (bytes)</th></tr>
