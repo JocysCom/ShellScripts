@@ -7,13 +7,18 @@ https://csrc.nist.gov/csrc/media/projects/cryptographic-module-validation-progra
 
 RSA key strength X-bits:
 `calculated_bits=(1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
+
 Round strength value:
 `rounded_bits=ROUND(calculated_bits/16,0)*16`
 
 RSA key using OAEP padding can encrypt up to X bytes:
+
 `data_in_bytes=(key_length/8) – 42`
+
 `data_out_bytes=(key_length/8)`
+
 Base64 length from output bytes
+
 `data_out_base64_bytes=CEILING((4*data_out_bytes/3)/4,1)*4`
 
 <table>
