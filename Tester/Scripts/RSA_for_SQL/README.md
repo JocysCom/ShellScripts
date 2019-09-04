@@ -1,7 +1,24 @@
 # RSA Implementation for Microsoft SQL Server and C#
 	
 Contains C# methods for importing/exporting Microsoft Private Key Format file (.PVK). PVK is a proprietary Microsoft format that stores a cryptographic private key and can be password-protected. PVK files are used by Microsoft SQL Server.
-	
+
+NIST recommended forumla to calculate RSA key strength could be found in "Implementation Guidance for FIPS 140-2 and the Cryptographic Module Validation Program" document, Page 112 - 7.5 Strength of Key Establishment Methods:
+https://csrc.nist.gov/csrc/media/projects/cryptographic-module-validation-program/documents/fips140-2/fips1402ig.pdf
+
+Excel Formula:
+`= (1.923*POWER(B6*LN(2),1/3)*POWER(POWER(LN(B6*LN(2)),2),1/3)-4.69)/LN(2)`
+
+<table>
+<tr><th>RSA</td><th colspan="2">Strength (bits)</th></tr>
+<tr><th>Key Length</th><th>Assigned</th><th>Calculated</th></tr>
+<tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td></tr>
+<tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td></tr>
+<tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td></tr>
+<tr><td align="right">7680</td><td align="right">192</td><td align="right">196.25</td></tr>
+<tr><td align="right">15360</td><td align="right">256</td><td align="right">262.62</td></tr>
+</table>
+
+
 Example:
 ```TSQL
 -- Creating a self-signed certificate.
