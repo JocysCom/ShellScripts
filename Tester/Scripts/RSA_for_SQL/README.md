@@ -5,17 +5,20 @@ Contains C# methods for importing/exporting Microsoft Private Key Format file (.
 NIST recommended forumla to calculate RSA key strength could be found in "Implementation Guidance for FIPS 140-2 and the Cryptographic Module Validation Program" document, Page 112 - 7.5 Strength of Key Establishment Methods:
 https://csrc.nist.gov/csrc/media/projects/cryptographic-module-validation-program/documents/fips140-2/fips1402ig.pdf
 
-Excel Formula:
-`= (1.923*POWER(B6*LN(2),1/3)*POWER(POWER(LN(B6*LN(2)),2),1/3)-4.69)/LN(2)`
+RSA key strength X-bits:
+`= (1.923*POWER(key_length*LN(2),1/3)*POWER(POWER(LN(key_length*LN(2)),2),1/3)-4.69)/LN(2)`
+
+RSA key using OAEP padding can encrypt up to X bytes:
+`X = (key_length/8) – 42`
 
 <table>
-<tr><th>RSA Key</td><th colspan="2">Strength (bits)</th></tr>
-<tr><th>Length</th><th>Assigned</th><th>Calculated</th></tr>
-<tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td></tr>
-<tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td></tr>
-<tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td></tr>
-<tr><td align="right">7680</td><td align="right">192</td><td align="right">196.25</td></tr>
-<tr><td align="right">15360</td><td align="right">256</td><td align="right">262.62</td></tr>
+<tr><th>RSA Key</td><th colspan="2">Strength (bits)</th><th>Max</th></tr>
+<tr><th>Length</th><th>Assigned</th><th>Calculated</th><th>Data</th></tr>
+<tr><td align="right">1024</td><td align="right">80</td><td align="right">80.00</td><td align="right">86</td></tr>
+<tr><td align="right">2048</td><td align="right">112</td><td align="right">110.12</td><td align="right">214</td></tr>
+<tr><td align="right">3072</td><td align="right">128</td><td align="right">131.97</td><td align="right">342</td></tr>
+<tr><td align="right">7680</td><td align="right">192</td><td align="right">196.25</td><td align="right">918</td></tr>
+<tr><td align="right">15360</td><td align="right">256</td><td align="right">262.62</td><td align="right">1878</td></tr>
 </table>
 
 
