@@ -203,11 +203,12 @@ Results:
 
 ```C#
 /// <summary>Hash new password.</summary>
-public static string HashPassword(string password)
+public static string HashPassword(string password, int security = 256)
 {
-	// Limit hash and salt size to 16 bytes.
-	// This will produce base64 which will fit into a varchar(44) field on database.
-	var size = 16;
+	// You can limit security to 128-bit which will produce
+	// base64 string, which will fit into a varchar(44) field on the database.
+	// This will allow to store encrypted password in old password field if its size is limited.
+	var size = security / 8;
 	var algorithm = new System.Security.Cryptography.HMACSHA256();
 	// ----------------------------------------------------------------
 	// Convert string to bytes.
@@ -237,10 +238,6 @@ public static string HashPassword(string password)
 ```C#
 public static bool IsValidPassword(string password, string base64)
 {
-	// Limit hash and salt size to 16 bytes.
-	// This will produce base64 which will fit into a varchar(44) field on database.
-	var size = 16;
-	var algorithm = new System.Security.Cryptography.HMACSHA256();
 	// ----------------------------------------------------------------
 	if (string.IsNullOrEmpty(password))
 		return false;
@@ -250,9 +247,8 @@ public static bool IsValidPassword(string password, string base64)
 	byte[] baseBytes;
 	try { baseBytes = System.Convert.FromBase64String(base64); }
 	catch { return false; }
-	// Make sure size is correct.
-	if (baseBytes.Length != size * 2)
-		return false;
+	// Get size of salt and hash.
+	var size = baseBytes.Length;
 	var salt = new byte[size];
 	var hash = new byte[size];
 	Array.Copy(baseBytes, 0, salt, 0, size);
@@ -260,13 +256,16 @@ public static bool IsValidPassword(string password, string base64)
 	Console.WriteLine("IsValidPassword:");
 	Console.WriteLine("  Salt: {0}", string.Join("", salt.Select(x => x.ToString("X2"))));
 	Console.WriteLine("  Hash: {0}", string.Join("", hash.Take(size).Select(x => x.ToString("X2"))));
+	// ----------------------------------------------------------------
 	// Convert string to bytes.
 	// Use Unicode, because ASCII doesn't work worldwide and SQL server doesn't support UTF8.
 	var passwordBytes = System.Text.Encoding.Unicode.GetBytes(password);
+	var algorithm = new System.Security.Cryptography.HMACSHA256();
 	algorithm.Key = salt;
 	var passwordHash = algorithm.ComputeHash(passwordBytes);
 	// Compare first specified bytes.
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < size; i++)
+	{
 		if (passwordHash[i] != hash[i])
 			// Password hash bytes do not match.
 			return false;
