@@ -1,3 +1,7 @@
+-- Select keys
+SELECT [name], [key_length], 'CERTIFICATE' [encryptor_type] from  sys.certificates UNION
+SELECT [name], [key_length], 'SYMMETRIC KEY' [encryptor_type] from  sys.symmetric_keys
+
 -- Creating a self-signed certificate.
 CREATE CERTIFICATE SqlTestCertificate01   
    ENCRYPTION BY PASSWORD = 'password1234$'  
