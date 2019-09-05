@@ -180,7 +180,7 @@ END
 Example:
 ```C#
 // Use Unicode, because ASCII doesn't work worldwide.
-var base64 = HashPassword("Password");
+var base64 = HashPassword("Password", 128);
 var isValid = IsValidPassword("Password", base64);
 Console.WriteLine("Results:");
 Console.WriteLine("  IsValid: {0}, base64: {1}", isValid, base64);
