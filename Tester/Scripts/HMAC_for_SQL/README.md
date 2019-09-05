@@ -248,7 +248,7 @@ public static bool IsValidPassword(string password, string base64)
 	try { baseBytes = System.Convert.FromBase64String(base64); }
 	catch { return false; }
 	// Get size of salt and hash.
-	var size = baseBytes.Length;
+	var size = baseBytes.Length / 2;
 	var salt = new byte[size];
 	var hash = new byte[size];
 	Array.Copy(baseBytes, 0, salt, 0, size);
