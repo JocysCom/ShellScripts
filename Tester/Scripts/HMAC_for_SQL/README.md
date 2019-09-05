@@ -100,7 +100,8 @@ GO
 
 ```TSQL
 ALTER FUNCTION [dbo].[Security_HashPassword] (
-	@password nvarchar(max)
+	@password nvarchar(max),
+	@security int
 )
 RETURNS varchar(max)
 AS
@@ -108,28 +109,39 @@ BEGIN
 	-- Author: Evaldas Jocys, https://www.jocys.com
 	-- Created: 2019-07-25
 	/* Example:
-	-- Use Unicode, because ASCII doesn't work worldwide.
-	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password')
+
+	Note: @password is Unicode (nvarchar) type, because ASCII doesn't work worldwide.
+	
+	-- 256-bit security:
+	-- Return 64 bytes (32 salt bytes + 32 hash bytes) as base64 string, which will fit into a varchar(88) field.
+	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password', null)
 	SELECT dbo.Security_IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
+
+	-- 128-bit security:
+	-- Return 32 bytes (16 salt bytes + 16 hash bytes) as base64 string, which will fit into a varchar(44) field.
+	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password', 128)
+	SELECT dbo.Security_IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
+
 	*/
-	-- Limit hash and salt size to 16 bytes. This will produce base64 which will fit into a varchar(44) field.
-	DECLARE @size int = 16
+	IF @security IS NULL
+		SET @security = 256
+	DECLARE @size int = @security / 8
 	DECLARE @algorithm sysname = 'SHA2_256'
 	-- Convert string to bytes.
 	DECLARE @password_data varbinary(max) = CAST(@password  AS varbinary(max))
 	DECLARE @password_salt varbinary(max) = CAST('' as varbinary(max))
+	-- Generate random salt.
 	WHILE LEN(@password_salt) < @size
 		SET @password_salt = @password_salt + CAST((SELECT * FROM Security_NewID) AS varbinary(16))
 	SET @password_salt = SUBSTRING(@password_salt, 1, @size);
 	DECLARE @password_hash varbinary(max) = SUBSTRING(dbo.Security_HMAC(@algorithm, @password_salt, @password_data), 1, @size)
 	-- Combine salt and hash and convert to HEX.
 	DECLARE @salt_hash_bin varbinary(max) = @password_salt + @password_hash
-	DECLARE @salt_hash_hex varchar(max) = CONVERT(varchar(max), @salt_hash_bin, 2)
+	--DECLARE @salt_hash_hex varchar(max) = CONVERT(varchar(max), @salt_hash_bin, 2)
 	-- Convert salt and hash to Base64 string.
 	DECLARE @base64 varchar(max) = (SELECT @salt_hash_bin FOR XML PATH(''), BINARY BASE64)
 	RETURN @base64
-END
-```
+END```
 <hr />
 
 ```TSQL
@@ -144,15 +156,16 @@ BEGIN
 	-- Created: 2019-07-25
 	/* Example:
 	-- Use Unicode, because ASCII doesn't work worldwide.
-	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password')
+	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password', 128)
 	SELECT dbo.Security_IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 	*/
-	-- Limit hash and salt size to 16 bytes. This will produce base64 which will fit into a varchar(44) field.
-	DECLARE @size int = 16
+	-- Convert base64 string to binary.
+	DECLARE @salt_hash_bin varbinary(max) = CAST(N'' as xml).value('xs:base64Binary(sql:variable("@base64"))', 'varbinary(max)');
+	-- Get size of salt and hash.
+	DECLARE @size int = LEN(@salt_hash_bin) / 2
 	DECLARE @algorithm sysname = 'SHA2_256'
 	-- Salt and Hash size.
 	DECLARE @password_data varbinary(max) = CAST(@password AS varbinary(max))
-	DECLARE @salt_hash_bin varbinary(max) = CAST(N'' as xml).value('xs:base64Binary(sql:variable("@base64"))', 'varbinary(max)');
 	DECLARE @salt varbinary(max) = SUBSTRING(@salt_hash_bin, 1, @size)
 	DECLARE @hash varbinary(max) = SUBSTRING(@salt_hash_bin, 1+ @size, @size + @size)
 	DECLARE @password_hash varbinary(max) = SUBSTRING(dbo.Security_HMAC(@algorithm, @salt, @password_data), 1, @size)
