@@ -9,7 +9,7 @@ Example:
 -- Use Unicode, because ASCII doesn't work worldwide.
 DECLARE @password nvarchar(max) = N'Password'
 -- Get base64 string which contains random salt and password hash inside.
-DECLARE @base64 varchar(max) = dbo.Security_HashPassword(@password)
+DECLARE @base64 varchar(max) = dbo.Security_HashPassword(@password, 128)
 -- Validate password against base64 string.
 DECLARE @isValid bit = dbo.Security_IsValidPassword(@password, @base64)
 -- Print results.
