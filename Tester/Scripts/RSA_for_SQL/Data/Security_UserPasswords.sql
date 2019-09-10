@@ -1,24 +1,29 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 CREATE TABLE [dbo].[Security_UserPasswords](
 	-- Unique record id.
-	[password_id] int IDENTITY(1,1) NOT NULL,
+	[id] int IDENTITY(1,1) NOT NULL,
 	-- User/Profile id.
 	[user_id] varchar(50) NOT NULL,
 	-- Date when password was created.
-	[password_change_date] datetime NOT NULL,
-	-- Password hash (256-bit)
-	[password_hash] varbinary(32) NOT NULL,
+	[changed] datetime NOT NULL,
 	-- Password salt (256-bit)
-	[password_salt] varbinary(32) NOT NULL,
- CONSTRAINT [PK_Security_UserPasswords] PRIMARY KEY CLUSTERED ([password_id] ASC)
+	[salt] varbinary(32) NOT NULL,
+	-- Password hash (256-bit)
+	[hash] varbinary(32) NOT NULL,
+	-- Base 64 string which contains salt and hash (256-bit).
+	[base] varchar(88) NOT NULL,
+	-- RSA 4096 encrypted password (128-bit security).
+	[data] varbinary(512) NOT NULL,
+ CONSTRAINT [PK_Security_UserPasswords] PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
-CREATE NONCLUSTERED INDEX [IX_Security_UserPasswords__password_hash__password_salt] ON [dbo].[Security_UserPasswords]
+CREATE NONCLUSTERED INDEX [IX_Security_UserPasswords__hash__salt] ON [dbo].[Security_UserPasswords]
 (
-	[password_hash] ASC,
-	[password_salt] ASC
+	[hash] ASC,
+	[salt] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_Security_UserPasswords__user_id__id] ON [dbo].[Security_UserPasswords]
+(
+	[user_id] ASC,
+	[id] DESC
 )
 GO

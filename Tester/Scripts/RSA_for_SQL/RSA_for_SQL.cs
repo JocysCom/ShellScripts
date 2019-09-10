@@ -14,34 +14,46 @@ public class RSA_for_SQL
 
 	public static int ProcessArguments(params string[] args)
 	{
-		// Generate new self signed certificate.
-		var name = "name@domain.com";
-		//name = WindowsIdentity.GetCurrent().Name;
+		GenerateCertificate("Security_PasswordCertificate01", 4096);
+		GenerateCertificate("Security_PasswordCertificate02", 3072);
+		Console.WriteLine("Done");
+		return 0;
+	}
+
+	static void GenerateCertificate(string name, int keyBitLength)
+	{
 		Console.WriteLine("Generating Certificate for: {0}", name);
-		var properties = new CertificateHelper.SelfSignedCertProperties(name);
+		var properties = new CertificateHelper.SelfSignedCertProperties(name, keyBitLength);
 		var cert = CertificateHelper.CreateSelfSignedCertificate(properties);
 		var priBin = "Store\\" + name + ".pfx";
-		var pubBin = "Store\\" + name + ".PublicKey.cer";
-		var priPem = "Store\\" + name + ".pem";
-		var pubPem = "Store\\" + name + ".PublicKey.pem";
-		string privateKeyPassword = null;
+		var pubCer = "Store\\" + name + ".PublicKey.cer";
+		var priPem = "Store\\" + name + ".PrivateKey.pem";
+		var priPvk = "Store\\" + name + ".PrivateKey.pvk";
+		string privateKeyPassword = "Password1234$";
+		byte[] pvkBytes;
 		if (cert != null)
 		{
 			CertificateHelper.ExportPrivateKey(cert, priBin, false, privateKeyPassword);
 			CertificateHelper.ExportPrivateKey(cert, priPem, true, privateKeyPassword);
-			CertificateHelper.ExportPublicKey(cert, pubBin, false);
-			CertificateHelper.ExportPublicKey(cert, pubPem, true);
+			CertificateHelper.ExportPublicKey(cert, pubCer, false);
+			pvkBytes = PrivateKeyHelper.Convert(cert.PrivateKey as RSACryptoServiceProvider, privateKeyPassword);
+			System.IO.File.WriteAllBytes(priPvk, pvkBytes);
 		}
 		// Encryption test.
 		var text = "Test";
 		Console.WriteLine("Encrypt: {0}", text);
-		var encrypted = CertificateHelper.Encrypt(pubBin, "Test", null, true);
-		Console.WriteLine(encrypted);
+		var encrypted = CertificateHelper.Encrypt(pubCer, "Test", null, false);
+		Console.WriteLine("Encrypted:\r\n{0}", encrypted);
 		// Decryption test.
-		var decrypted = CertificateHelper.Decrypt(priBin, encrypted, privateKeyPassword);
+		//var decrypted = CertificateHelper.Decrypt(priBin, encrypted, privateKeyPassword);
+
+		pvkBytes = System.IO.File.ReadAllBytes(priPvk);
+		var key = PrivateKeyHelper.Convert(pvkBytes, privateKeyPassword);
+		var bytes = Convert.FromBase64String(encrypted);
+		var decryptedBytes = key.Decrypt(bytes, true);
+		var decrypted = Encoding.Unicode.GetString(decryptedBytes);
+
 		Console.WriteLine("Decrypted: {0}", decrypted);
-		Console.WriteLine("Done");
-		return 0;
 	}
 
 	public class CertificateHelper
@@ -282,14 +294,14 @@ public class RSA_for_SQL
 			public X500DistinguishedName Name { get; set; }
 			public int KeyBitLength { get; set; }
 			public bool IsPrivateKeyExportable { get; set; }
-			public SelfSignedCertProperties(string name = "self")
+			public SelfSignedCertProperties(string name = "self", int keyBitLength = 4096)
 			{
 				IsPrivateKeyExportable = true;
 				var today = DateTime.Today;
 				ValidFrom = today.AddDays(-1);
 				ValidTo = today.AddYears(10);
 				Name = new X500DistinguishedName("cn=" + name);
-				KeyBitLength = 4096;
+				KeyBitLength = keyBitLength;
 			}
 		}
 

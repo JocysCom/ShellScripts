@@ -55,18 +55,18 @@ GO
 
 -- Backup certificate to files.
 BACKUP CERTIFICATE SqlTestCertificate01
-	TO FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.cer'
+	TO FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.cer'
 	WITH PRIVATE KEY (
-		FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.pvk',  
+		FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.pvk',  
 		ENCRYPTION BY PASSWORD = 'password1234$',   
 		DECRYPTION BY PASSWORD = 'password1234$'
 	);
 
 -- Creating a certificate from a file
 CREATE CERTIFICATE SqlTestCertificate01   
-    FROM FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.cer'
+    FROM FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.cer'
     WITH PRIVATE KEY (
-		FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.pvk',
+		FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.pvk',
 		DECRYPTION BY PASSWORD = 'password1234$'
 	);  
 GO 
@@ -87,15 +87,15 @@ GO
 
 -- Importing a private key for a certificate that is already present in the database.
 ALTER CERTIFICATE SqlTestCertificate01   
-    WITH PRIVATE KEY (FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.pvk',  
+    WITH PRIVATE KEY (FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.pvk',  
     DECRYPTION BY PASSWORD = 'password1234$');  
 GO  
 
 -- Creating a certificate from a file
 CREATE CERTIFICATE SqlTestCertificate01   
-    FROM FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.cer'
+    FROM FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.cer'
     WITH PRIVATE KEY (
-		FILE = 'c:\ProgramData\DAC\SqlTestCertificate01.pvk',
+		FILE = 'c:\ProgramData\MSSQL\SqlTestCertificate01.pvk',
 		DECRYPTION BY PASSWORD = 'password1234$'
 	);  
 GO 

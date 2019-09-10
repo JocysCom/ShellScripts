@@ -1,19 +1,25 @@
+IF OBJECT_ID('[Security_Authorize]', 'P') IS NOT NULL DROP PROCEDURE [Security_Authorize]
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE PROCEDURE [dbo].[Security_Authorize]
-	@username varchar(50),
-	@password varchar(100) = null,
+	@user_id varchar(50),
+	@password nvarchar(50)
 AS
 
--- Failed authorization attempts:
------  ---------------------------
--- No  Consequences
------  ---------------------------
--- 1   none
-       -- 2   none
-       -- 3   invalid_login_lock_time = now +  5 min
-       -- 4   invalid_login_lock_time = now + 10 min 
-       -- 5   invalid_login_lock_time = now + 20 min 
-       -- 6   invalid_login_lock_time = now + 40 min 
+-- EXEC [Security_Authorize] '1', 'password123'
 
--- SQL script formula to calculate lock minutes.
-SET @lock_minutes = @invalid_login_lock_minutes * POWER(@invalid_login_lock_multiplier, @invalid_login_count - @invalid_logins_before_lock - 1)
-SET @invalid_login_lock_time = DATEADD(MINUTE,@lock_minutes, @now)
+SET NOCOUNT ON 
+
+DECLARE @base as varchar(max)
+
+SELECT TOP 1 @base = [base] FROM [Security_UserPasswords] WHERE [user_id] = @user_id ORDER BY [user_id] ASC, id DESC
+
+DECLARE @isValid bit = dbo.Security_IsValidPassword(@password, @base)
+
+PRINT @base
+PRINT @isValid
+
+SET NOCOUNT OFF
