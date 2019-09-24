@@ -6,6 +6,7 @@ using System.DirectoryServices.AccountManagement;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,7 +45,8 @@ public class List_Domain_Computers
 		var key = Console.ReadKey(true);
 		Console.WriteLine(string.Format("{0}", key.KeyChar));
 		var suffix = "_domain_computers";
-		if (key.KeyChar == '1'){
+		if (key.KeyChar == '1')
+		{
 			list = list.Where(x => x.Type == "Server").ToList();
 			suffix = "_domain_servers";
 		}
@@ -72,27 +74,15 @@ public class List_Domain_Computers
 			suffix = active.Value ? "_active" : "_passive";
 		var fileName = file + suffix + ".xls";
 		Console.WriteLine("{0}: Test", fileName);
-		UpdateIsOnline(list);
+		ParallelAction(list, UpdateIsOnline);
 		var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
 		if (active.HasValue)
 		{
 			var absentList = list.Except(activeList).ToList();
 			list = active.Value ? activeList : absentList;
 		}
-		for (int i = 0; i < activeList.Count; i++)
-		{
-			var item = activeList[i];
-			Console.WriteLine("{0}. Check SQL Instance: {1} {2}", i, item.Address, item.Name);
-			// Fill SQL instance.
-			try
-			{
-				item.SqlInstance = string.Join(";", GetSqlInstances(item.Address));
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Exception: {0}", ex.Message);
-			}
-		}
+		ParallelAction(activeList, FillMacAddress);
+		ParallelAction(activeList, FillSqlVersion);
 		Console.WriteLine("{0}: Write", fileName);
 		var table = new Table();
 		table.Rows = list;
@@ -169,13 +159,14 @@ public class List_Domain_Computers
 			try
 			{
 				var ipaddress = Dns.GetHostAddresses(host);
-				var addresses = ipaddress
+				var address = ipaddress
 					.Where(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
 					// Exclude The 169 IP range of addresses is reserved by Microsoft for private network addressing
 					.Where(x => x.GetAddressBytes()[0] != 169)
 					.OrderBy(x => x.ToString())
-					.ToArray();
-				ips = string.Join(" ", addresses.FirstOrDefault());
+					.ToArray()
+					.FirstOrDefault();
+				ips = string.Join(" ", address);
 			}
 			catch (Exception)
 			{
@@ -298,7 +289,7 @@ public class List_Domain_Computers
 					var info = displayName + " " + sps + " " + patchLevel;
 					if (!list.Contains(info))
 						list.Add(info);
-					Console.WriteLine("{0}: {1} {2}", instanceValueData, info, edition);
+					//Console.WriteLine("{0}: {1} {2}", instanceValueData, info, edition);
 					setupKey.Close();
 				}
 				instancesKey.Close();
@@ -306,6 +297,107 @@ public class List_Domain_Computers
 			serverKey.Close();
 		}
 		return list;
+	}
+
+	///// <summary>
+	///// Works only for same subnet.
+	///// </summary>
+	///// <param name="remoteAddress"></param>
+	///// <param name="sourceAddress"></param>
+	///// <returns></returns>
+	//public static PhysicalAddress GetMacAddress(IPAddress remoteAddress, IPAddress sourceAddress = null)
+	//{
+	//	if (remoteAddress.AddressFamily != AddressFamily.InterNetwork)
+	//		throw new Exception("Only IP4 is supported");
+	//	var remoteAddressInt = BitConverter.ToInt32(remoteAddress.GetAddressBytes(), 0);
+	//	var sourceAddressInt = BitConverter.ToInt32((sourceAddress ?? IPAddress.Any).GetAddressBytes(), 0);
+	//	var macAddress = new byte[6];
+	//	var macAddrLen = macAddress.Length;
+	//	var ret = NativeMethods.SendArp(remoteAddressInt, sourceAddressInt, macAddress, ref macAddrLen);
+	//	if (ret != 0)
+	//	{
+	//		throw new System.ComponentModel.Win32Exception(ret);
+	//	}
+	//	return new PhysicalAddress(macAddress);
+	//}
+
+	public static PhysicalAddress GetMacAddress(string system)
+	{
+		var ips = new List<string>();
+		string output;
+		try
+		{
+			// Start the child process.
+			var p = new System.Diagnostics.Process();
+			// Redirect the output stream of the child process.
+			p.StartInfo.UseShellExecute = false;
+			p.StartInfo.RedirectStandardOutput = true;
+			p.StartInfo.UseShellExecute = false;
+			p.StartInfo.CreateNoWindow = true;
+			p.StartInfo.FileName = "GETMAC";
+			p.StartInfo.Arguments = string.Format("/S \"{0}\"", system);
+			p.Start();
+			// Read the output stream first.
+			output = p.StandardOutput.ReadToEnd();
+			// Wait for exit.
+			p.WaitForExit();
+		}
+		catch
+		{
+			return null;
+		}
+		// pattern to get all connections
+		var rx = new System.Text.RegularExpressions.Regex(
+			@"\s+(?<mac>([0-9A-F]{2}[:-]){5}([0-9A-F]{2}))\s+",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+		var match = rx.Match(output);
+		if (match.Success) {
+			var mac = match.Groups["mac"].Value.Replace(":", "-");
+			var bytes = StringToByteArray(mac);
+			var address = new PhysicalAddress(bytes);
+			return address;
+		}
+		return null;
+	}
+
+	public static byte[] StringToByteArray(string hex)
+	{
+		if (hex.StartsWith("0x"))
+			hex = hex.Substring(2);
+		hex = hex.Replace(":", "").Replace("-", "");
+		var chars = hex.Length;
+		var bytes = new byte[chars / 2];
+		for (int i = 0; i < chars; i += 2)
+			bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+		return bytes;
+	}
+
+	static class NativeMethods
+	{
+		/// <summary>
+		/// Sends an ARP request to obtain the physical address that corresponds
+		/// to the specified destination IP address.
+		/// </summary>
+		/// <param name="destIpAddress">Destination IP address, in the form of
+		/// a <see cref="T:System.Int32"/>. The ARP request attempts to obtain
+		/// the physical address that corresponds to this IP address.
+		/// </param>
+		/// <param name="srcIpAddress">IP address of the sender, in the form of
+		/// a <see cref="T:System.Int32"/>. This parameter is optional. The caller
+		/// may specify zero for the parameter.
+		/// </param>
+		/// <param name="macAddress">
+		/// </param>
+		/// <param name="macAddressLength">On input, specifies the maximum buffer
+		/// size the user has set aside at pMacAddr to receive the MAC address,
+		/// in bytes. On output, specifies the number of bytes written to
+		/// pMacAddr.</param>
+		/// <returns>If the function succeeds, the return value is NO_ERROR.
+		/// If the function fails, use FormatMessage to obtain the message string
+		/// for the returned error.
+		/// </returns>
+		[System.Runtime.InteropServices.DllImport("Iphlpapi.dll", EntryPoint = "SendARP")]
+		internal extern static int SendArp(int destIpAddress, int srcIpAddress, byte[] macAddress, ref int macAddressLength);
 	}
 
 	public static void ProgressWrite(int i, int max)
@@ -460,45 +552,82 @@ public class List_Domain_Computers
 		return false;
 	}
 
-	static int UpdateIsOnlineCount;
-	static int UpdateIsOnlineTotal;
+	static int ParallelCount;
+	static int ParallelTotal;
+	static object ParalelReportLock = new object();
 
-	public static void UpdateIsOnline(List<Computer> computers)
+	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action)
 	{
-		UpdateIsOnlineCount = 0;
-		UpdateIsOnlineTotal = computers.Count;
+		ParallelCount = 0;
+		ParallelTotal = computers.Count;
 		Parallel.ForEach(computers,
 		new ParallelOptions { MaxDegreeOfParallelism = 16 },
-		   x => UpdateIsOnline(x)
+		   x => ParallelItemAction(x, action)
 		);
 	}
 
-	static void UpdateIsOnline(Computer computer)
+	public static void ParallelItemAction(Computer computer, Func<Computer, string> action)
 	{
+		string result;
 		try
 		{
-			// Try to PING first because it won't use and lock local port.
-			if (string.IsNullOrEmpty(computer.OpenPort) && Ping(computer.Name, 2000))
-				computer.OpenPort = "ICMP";
-			// NetBIOS UDP 137.
-			if (string.IsNullOrEmpty(computer.OpenPort) && CheckNetBios(computer))
-				computer.OpenPort = "UDP/137";
-			// RPC TCP 135.
-			if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 135))
-				computer.OpenPort = "TCP/135";
-			// RDP TCP 3389.
-			if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 3389))
-				computer.OpenPort = "TCP/3389";
-			// Report.
-			System.Threading.Interlocked.Increment(ref UpdateIsOnlineCount);
-			var percent = (decimal)UpdateIsOnlineCount / (decimal)UpdateIsOnlineTotal * 100m;
-			Console.WriteLine("{0," + UpdateIsOnlineTotal.ToString().Length + "}. {1,-16} Port: {2,8} - {3,5:0.0}%",
-				UpdateIsOnlineCount, computer.Name, computer.OpenPort, percent);
+			result = string.Format("{0}", action(computer));
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine("{0} Exception: {1}", computer.Name, ex.Message);
+			result= string.Format("Exception: {0}", ex.Message);
 		}
+		// Report.
+		lock (ParalelReportLock)
+		{
+			System.Threading.Interlocked.Increment(ref ParallelCount);
+			var percent = (decimal)ParallelCount / (decimal)ParallelTotal * 100m;
+			Console.WriteLine("{0,5:0.0}% - {1," + ParallelTotal.ToString().Length + "}. {2,-16} - {3}",
+				percent, ParallelCount, computer.Name, result);
+		}
+	}
+
+	static string UpdateIsOnline(Computer computer)
+	{
+		// Try to PING first because it won't use and lock local port.
+		if (string.IsNullOrEmpty(computer.OpenPort) && Ping(computer.Name, 2000))
+			computer.OpenPort = "ICMP";
+		// NetBIOS UDP 137.
+		if (string.IsNullOrEmpty(computer.OpenPort) && CheckNetBios(computer))
+			computer.OpenPort = "UDP/137";
+		// RPC TCP 135.
+		if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 135))
+			computer.OpenPort = "TCP/135";
+		// RDP TCP 3389.
+		if (string.IsNullOrEmpty(computer.OpenPort) && IsPortOpen(computer.Name, 3389))
+			computer.OpenPort = "TCP/3389";
+		return computer.OpenPort;
+	}
+
+	static string FillMacAddress(Computer computer)
+	{
+		string result;
+		// Fill MAC address.
+		var mac = "";
+		try
+		{
+			var pa = GetMacAddress(computer.Address);
+			if (pa != null)
+				mac = BitConverter.ToString(pa.GetAddressBytes());
+			result = string.Format("IP: {0}, MAC: {1}", computer.Address, mac);
+		}
+		catch (Exception ex)
+		{
+			result = string.Format("IP: {0,-15}, Exception: {1}", computer.Address, ex.Message);
+		}
+		computer.MAC = mac;
+		return result;
+	}
+
+	static string FillSqlVersion(Computer computer)
+	{
+		computer.SqlInstance = string.Join(";", GetSqlInstances(computer.Address));
+		return computer.SqlInstance;
 	}
 
 	#endregion
@@ -517,6 +646,7 @@ public class List_Domain_Computers
 		public string Type { get; set; }
 		// Address before name for better compatibility with IP-Name format.
 		public string Address { get; set; }
+		public string MAC { get; set; }
 		public string Name { get; set; }
 		public string Os { get; set; }
 		public string OsVersion { get; set; }
@@ -526,7 +656,6 @@ public class List_Domain_Computers
 		public DateTime? LastLogon { get; set; }
 		public string OpenPort { get; set; }
 		public string SqlInstance { get; set; }
-
 	}
 
 	static void Serialize<T>(T o, string path)
