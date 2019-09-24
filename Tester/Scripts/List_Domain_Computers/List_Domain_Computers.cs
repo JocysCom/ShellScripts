@@ -374,6 +374,7 @@ public class List_Domain_Computers
 					// Timed out.
 					ex = new Exception("Timeout");
 				}
+				// Detach events before disposing process.
 				p.OutputDataReceived -= outputReceived;
 				p.ErrorDataReceived -= errorReceived;
 			}
