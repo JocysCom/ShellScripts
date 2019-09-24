@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
+using System.Diagnostics;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.IO;
@@ -9,6 +10,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -81,8 +83,8 @@ public class List_Domain_Computers
 			var absentList = list.Except(activeList).ToList();
 			list = active.Value ? activeList : absentList;
 		}
-		ParallelAction(activeList, FillMacAddress);
-		ParallelAction(activeList, FillSqlVersion);
+		ParallelAction(activeList, FillMacAddress, 8);
+		ParallelAction(activeList, FillSqlVersion, 8);
 		Console.WriteLine("{0}: Write", fileName);
 		var table = new Table();
 		table.Rows = list;
@@ -321,37 +323,74 @@ public class List_Domain_Computers
 	//	return new PhysicalAddress(macAddress);
 	//}
 
-	public static PhysicalAddress GetMacAddress(string system)
+	public static PhysicalAddress GetMacAddress(string system, out Exception ex)
 	{
-		var ips = new List<string>();
-		string output;
-		try
+		ex = null;
+		// Do not use the OS shell.
+		var si = new System.Diagnostics.ProcessStartInfo();
+		si.UseShellExecute = false;
+		// Allow writing output to the standard output.
+		si.RedirectStandardOutput = true;
+		// Allow writing error to the standard error.
+		si.RedirectStandardError = true;
+		si.CreateNoWindow = true;
+		si.FileName = "GETMAC";
+		si.Arguments = string.Format("/S \"{0}\"", system);
+		var output = new StringBuilder();
+		var error = new StringBuilder();
+		using (var outputWaitHandle = new AutoResetEvent(false))
+		using (var errorWaitHandle = new AutoResetEvent(false))
 		{
-			// Start the child process.
-			var p = new System.Diagnostics.Process();
-			// Redirect the output stream of the child process.
-			p.StartInfo.UseShellExecute = false;
-			p.StartInfo.RedirectStandardOutput = true;
-			p.StartInfo.UseShellExecute = false;
-			p.StartInfo.CreateNoWindow = true;
-			p.StartInfo.FileName = "GETMAC";
-			p.StartInfo.Arguments = string.Format("/S \"{0}\"", system);
-			p.Start();
-			// Read the output stream first.
-			output = p.StandardOutput.ReadToEnd();
-			// Wait for exit.
-			p.WaitForExit();
+			var timeout = 8000;
+			using (var p = new System.Diagnostics.Process() { StartInfo = si })
+			{
+				DataReceivedEventHandler outputReceived = (sender, e) =>
+					{
+						if (e.Data == null)
+							outputWaitHandle.Set();
+						else
+							output.AppendLine(e.Data);
+					};
+				DataReceivedEventHandler errorReceived = (sender, e) =>
+				{
+					if (e.Data == null)
+						errorWaitHandle.Set();
+					else
+						error.AppendLine(e.Data);
+				};
+				p.OutputDataReceived += outputReceived;
+				p.ErrorDataReceived += errorReceived;
+				p.Start();
+				p.BeginErrorReadLine();
+				p.BeginOutputReadLine();
+				int exitCode;
+				if (p.WaitForExit(timeout))
+				{
+					// Process completed. Check process.ExitCode here.
+					exitCode = p.ExitCode;
+				}
+				else
+				{
+					// Timed out.
+					ex = new Exception("Timeout");
+				}
+				p.OutputDataReceived -= outputReceived;
+				p.ErrorDataReceived -= errorReceived;
+			}
+			// Timeout handlers after 'p' is disposed to make sure that handers are not used in events.
+			outputWaitHandle.WaitOne(timeout);
+			errorWaitHandle.WaitOne(timeout);
 		}
-		catch
-		{
-			return null;
-		}
+		// Process completed. Check process.ExitCode here.
+		if (error.Length > 0)
+			ex = new Exception(error.ToString().Trim('\r', '\n', ' '));
 		// pattern to get all connections
 		var rx = new System.Text.RegularExpressions.Regex(
 			@"\s+(?<mac>([0-9A-F]{2}[:-]){5}([0-9A-F]{2}))\s+",
 			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-		var match = rx.Match(output);
-		if (match.Success) {
+		var match = rx.Match(output.ToString());
+		if (match.Success)
+		{
 			var mac = match.Groups["mac"].Value.Replace(":", "-");
 			var bytes = StringToByteArray(mac);
 			var address = new PhysicalAddress(bytes);
@@ -556,12 +595,12 @@ public class List_Domain_Computers
 	static int ParallelTotal;
 	static object ParalelReportLock = new object();
 
-	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action)
+	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action, int parallelTasks = 16)
 	{
 		ParallelCount = 0;
 		ParallelTotal = computers.Count;
 		Parallel.ForEach(computers,
-		new ParallelOptions { MaxDegreeOfParallelism = 16 },
+		new ParallelOptions { MaxDegreeOfParallelism = parallelTasks },
 		   x => ParallelItemAction(x, action)
 		);
 	}
@@ -575,7 +614,7 @@ public class List_Domain_Computers
 		}
 		catch (Exception ex)
 		{
-			result= string.Format("Exception: {0}", ex.Message);
+			result = string.Format("Exception: {0}", ex.Message);
 		}
 		// Report.
 		lock (ParalelReportLock)
@@ -611,7 +650,13 @@ public class List_Domain_Computers
 		var mac = "";
 		try
 		{
-			var pa = GetMacAddress(computer.Address);
+			Exception ex1;
+			var pa = GetMacAddress(computer.Address, out ex1);
+			if (ex1 != null)
+			{
+				result = string.Format("IP: {0,-15}, Exception: {1}", computer.Address, ex1.Message);
+				return result;
+			}
 			if (pa != null)
 				mac = BitConverter.ToString(pa.GetAddressBytes());
 			result = string.Format("IP: {0}, MAC: {1}", computer.Address, mac);
