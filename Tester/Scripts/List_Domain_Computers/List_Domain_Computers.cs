@@ -660,7 +660,7 @@ public class List_Domain_Computers
 			}
 			if (pa != null)
 				mac = BitConverter.ToString(pa.GetAddressBytes());
-			result = string.Format("IP: {0}, MAC: {1}", computer.Address, mac);
+			result = string.Format("IP: {0,-15}, MAC: {1}", computer.Address, mac);
 		}
 		catch (Exception ex)
 		{
