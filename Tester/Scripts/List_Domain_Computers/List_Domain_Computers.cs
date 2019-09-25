@@ -32,9 +32,6 @@ public class List_Domain_Computers
 		//GetVirtualMachines(domain);
 		var list = GetComputers(domain);
 		Console.WriteLine("{0} names exported", list.Count);
-		// Apply types.
-		list.Where(x => x.Os.Contains("Windows")).ToList().ForEach(x => x.Type = "Client");
-		list.Where(x => x.Os.Contains("Server")).ToList().ForEach(x => x.Type = "Server");
 		// Filter by type.
 		Console.WriteLine();
 		Console.WriteLine("Type:");
@@ -61,7 +58,7 @@ public class List_Domain_Computers
 		{
 			return 0;
 		}
-		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.Os).ThenBy(x => x.Name).ToList();
+		list = list.OrderByDescending(x => x.Type).ThenBy(x => x.OS).ThenBy(x => x.Name).ToList();
 		Write(list, domain + suffix);
 		Console.WriteLine();
 		return 0;
@@ -75,16 +72,17 @@ public class List_Domain_Computers
 		if (active.HasValue)
 			suffix = active.Value ? "_active" : "_passive";
 		var fileName = file + suffix + ".xls";
-		Console.WriteLine("{0}: Test", fileName);
-		ParallelAction(list, UpdateIsOnline);
+		Console.WriteLine("File Name: {0}", fileName);
+		ParallelAction(list, UpdateIsOnline, "NET");
 		var activeList = list.Where(x => !string.IsNullOrEmpty(x.OpenPort)).ToList();
 		if (active.HasValue)
 		{
 			var absentList = list.Except(activeList).ToList();
 			list = active.Value ? activeList : absentList;
 		}
-		ParallelAction(activeList, FillMacAddress, 8);
-		ParallelAction(activeList, FillSqlVersion, 8);
+		// Reduce threads or requests could be blocked.
+		ParallelAction(activeList, FillMacAddress, "MAC", 2);
+		ParallelAction(activeList, FillSqlVersion, "SQL", 4);
 		Console.WriteLine("{0}: Write", fileName);
 		var table = new Table();
 		table.Rows = list;
@@ -139,14 +137,17 @@ public class List_Domain_Computers
 				.Replace("Business", "")
 				.Replace("PC Edition", "")
 				.Replace("Pro", "")
+				.Replace("for Workstations", "")
 				.Replace("®", "")
 				.Replace("™", "")
+				.Replace("Evaluation", "")
 				.Trim();
 			var sp = os.Contains("Windows")
 				? string.Format("{0}", sr.Properties["OperatingSystemServicePack"].Value)
 				.Replace("Service Pack ", "SP")
 				.Trim()
 				: "";
+			os = os.Replace("2000 Server", "Server 2000").Trim();
 			var ov = string.Format("{0}", sr.Properties["OperatingSystemVersion"].Value).Trim();
 			DateTime? ll = null;
 			//if (sr.Properties["LastLogonTimeStamp"] != null && sr.Properties["LastLogonTimeStamp"].Count > 0)
@@ -176,16 +177,19 @@ public class List_Domain_Computers
 				//throw;
 				continue;
 			}
+			// Apply types.
 			var computer = new Computer()
 			{
 				Name = name,
-				Os = os,
-				OsVersion = ov,
-				OsPack = sp,
+				OS = os.Contains("Server") ? os.Replace("Windows", "").Trim() : os,
+				Version = ov,
+				SP = sp,
 				Address = ips,
 				LastLogon = ll,
 				OpenPort = null,
 			};
+			if (os.Contains("Windows"))
+				computer.Type = os.Contains("Server") ? "Server" : "Client";
 			list.Add(computer);
 			ProgressWrite(i, all.Length);
 		}
@@ -212,7 +216,7 @@ public class List_Domain_Computers
 						}
 						computer.SamAccountName = auth.SamAccountName;
 						computer.UserPrincipalName = auth.UserPrincipalName;
-
+						computer.Description = auth.Description;
 					}
 				}
 			}
@@ -274,19 +278,19 @@ public class List_Domain_Computers
 						//Console.WriteLine("{0}", displayName);
 						uninstallKey.Close();
 					}
-					if (version.StartsWith("15.")) displayName = "SQL Server 2019";
-					if (version.StartsWith("14.")) displayName = "SQL Server 2017";
-					if (version.StartsWith("13.")) displayName = "SQL Server 2016";
-					if (version.StartsWith("12.")) displayName = "SQL Server 2014";
-					if (version.StartsWith("11.")) displayName = "SQL Server 2012";
-					if (version.StartsWith("10.5")) displayName = "SQL Server 2008 R2";
-					if (version.StartsWith("10.4")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.3")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.2")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.1")) displayName = "SQL Server 2008";
-					if (version.StartsWith("10.0")) displayName = "SQL Server 2008";
-					if (version.StartsWith("9.")) displayName = "SQL Server 2005";
-					if (version.StartsWith("8.")) displayName = "SQL Server 2000";
+					if (version.StartsWith("15.")) displayName = "2019";
+					if (version.StartsWith("14.")) displayName = "2017";
+					if (version.StartsWith("13.")) displayName = "2016";
+					if (version.StartsWith("12.")) displayName = "2014";
+					if (version.StartsWith("11.")) displayName = "2012";
+					if (version.StartsWith("10.5")) displayName = "2008 R2";
+					if (version.StartsWith("10.4")) displayName = "2008";
+					if (version.StartsWith("10.3")) displayName = "2008";
+					if (version.StartsWith("10.2")) displayName = "2008";
+					if (version.StartsWith("10.1")) displayName = "2008";
+					if (version.StartsWith("10.0")) displayName = "2008";
+					if (version.StartsWith("9.")) displayName = "2005";
+					if (version.StartsWith("8.")) displayName = "2000";
 					// Write the version and edition info to output file
 					var info = displayName + " " + sps + " " + patchLevel;
 					if (!list.Contains(info))
@@ -326,76 +330,81 @@ public class List_Domain_Computers
 	public static PhysicalAddress GetMacAddress(string system, out Exception ex)
 	{
 		ex = null;
-		// Do not use the OS shell.
-		var si = new System.Diagnostics.ProcessStartInfo();
-		si.UseShellExecute = false;
-		// Allow writing output to the standard output.
-		si.RedirectStandardOutput = true;
-		// Allow writing error to the standard error.
-		si.RedirectStandardError = true;
-		si.CreateNoWindow = true;
-		si.FileName = "GETMAC";
-		si.Arguments = string.Format("/S \"{0}\"", system);
-		var output = new StringBuilder();
-		var error = new StringBuilder();
-		using (var outputWaitHandle = new AutoResetEvent(false))
-		using (var errorWaitHandle = new AutoResetEvent(false))
+		// Try twice.
+		for (int i = 0; i < 2; i++)
 		{
-			var timeout = 8000;
-			using (var p = new System.Diagnostics.Process() { StartInfo = si })
+			// Do not use the OS shell.
+			var si = new System.Diagnostics.ProcessStartInfo();
+			si.UseShellExecute = false;
+			// Allow writing output to the standard output.
+			si.RedirectStandardOutput = true;
+			// Allow writing error to the standard error.
+			si.RedirectStandardError = true;
+			si.CreateNoWindow = true;
+			si.FileName = "GETMAC";
+			si.Arguments = string.Format("/S \"{0}\"", system);
+			var output = new StringBuilder();
+			var error = new StringBuilder();
+			using (var outputWaitHandle = new AutoResetEvent(false))
+			using (var errorWaitHandle = new AutoResetEvent(false))
 			{
-				DataReceivedEventHandler outputReceived = (sender, e) =>
+				var timeout = 8000;
+				using (var p = new System.Diagnostics.Process() { StartInfo = si })
+				{
+					DataReceivedEventHandler outputReceived = (sender, e) =>
 					{
 						if (e.Data == null)
 							outputWaitHandle.Set();
 						else
 							output.AppendLine(e.Data);
 					};
-				DataReceivedEventHandler errorReceived = (sender, e) =>
-				{
-					if (e.Data == null)
-						errorWaitHandle.Set();
+					DataReceivedEventHandler errorReceived = (sender, e) =>
+					{
+						if (e.Data == null)
+							errorWaitHandle.Set();
+						else
+							error.AppendLine(e.Data);
+					};
+					p.OutputDataReceived += outputReceived;
+					p.ErrorDataReceived += errorReceived;
+					p.Start();
+					p.BeginErrorReadLine();
+					p.BeginOutputReadLine();
+					int exitCode;
+					if (p.WaitForExit(timeout))
+					{
+						// Process completed. Check process.ExitCode here.
+						exitCode = p.ExitCode;
+					}
 					else
-						error.AppendLine(e.Data);
-				};
-				p.OutputDataReceived += outputReceived;
-				p.ErrorDataReceived += errorReceived;
-				p.Start();
-				p.BeginErrorReadLine();
-				p.BeginOutputReadLine();
-				int exitCode;
-				if (p.WaitForExit(timeout))
-				{
-					// Process completed. Check process.ExitCode here.
-					exitCode = p.ExitCode;
+					{
+						// Timed out.
+						ex = new Exception("Timeout");
+					}
+					// Detach events before disposing process.
+					p.OutputDataReceived -= outputReceived;
+					p.ErrorDataReceived -= errorReceived;
 				}
-				else
-				{
-					// Timed out.
-					ex = new Exception("Timeout");
-				}
-				// Detach events before disposing process.
-				p.OutputDataReceived -= outputReceived;
-				p.ErrorDataReceived -= errorReceived;
+				// Timeout handlers after 'p' is disposed to make sure that handers are not used in events.
+				outputWaitHandle.WaitOne(timeout);
+				errorWaitHandle.WaitOne(timeout);
 			}
-			// Timeout handlers after 'p' is disposed to make sure that handers are not used in events.
-			outputWaitHandle.WaitOne(timeout);
-			errorWaitHandle.WaitOne(timeout);
-		}
-		// Process completed. Check process.ExitCode here.
-		if (error.Length > 0)
-			ex = new Exception(error.ToString().Trim('\r', '\n', ' '));
-		// pattern to get all connections
-		var rx = new System.Text.RegularExpressions.Regex(
-			@"\s+(?<mac>([0-9A-F]{2}[:-]){5}([0-9A-F]{2}))\s+",
-			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-		var match = rx.Match(output.ToString());
-		if (match.Success)
-		{
-			var mac = match.Groups["mac"].Value.Replace(":", "-");
-			var bytes = StringToByteArray(mac);
-			var address = new PhysicalAddress(bytes);
-			return address;
+			// Process completed. Check process.ExitCode here.
+			if (error.Length > 0)
+				ex = new Exception(error.ToString().Trim('\r', '\n', ' '));
+			// pattern to get all connections
+			var rx = new System.Text.RegularExpressions.Regex(
+				@"\s+(?<mac>([0-9A-F]{2}[:-]){5}([0-9A-F]{2}))\s+",
+				System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+			var match = rx.Match(output.ToString());
+			if (match.Success)
+			{
+				var mac = match.Groups["mac"].Value.Replace(":", "-");
+				var bytes = StringToByteArray(mac);
+				var address = new PhysicalAddress(bytes);
+				ex = null;
+				return address;
+			}
 		}
 		return null;
 	}
@@ -596,17 +605,17 @@ public class List_Domain_Computers
 	static int ParallelTotal;
 	static object ParalelReportLock = new object();
 
-	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action, int parallelTasks = 16)
+	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action, string group, int parallelTasks = 16)
 	{
 		ParallelCount = 0;
 		ParallelTotal = computers.Count;
 		Parallel.ForEach(computers,
 		new ParallelOptions { MaxDegreeOfParallelism = parallelTasks },
-		   x => ParallelItemAction(x, action)
+		   x => ParallelItemAction(x, action, group)
 		);
 	}
 
-	public static void ParallelItemAction(Computer computer, Func<Computer, string> action)
+	public static void ParallelItemAction(Computer computer, Func<Computer, string> action, string group)
 	{
 		string result;
 		try
@@ -622,8 +631,8 @@ public class List_Domain_Computers
 		{
 			System.Threading.Interlocked.Increment(ref ParallelCount);
 			var percent = (decimal)ParallelCount / (decimal)ParallelTotal * 100m;
-			Console.WriteLine("{0,5:0.0}% - {1," + ParallelTotal.ToString().Length + "}. {2,-16} - {3}",
-				percent, ParallelCount, computer.Name, result);
+			Console.WriteLine("{0} {1,5:0.0}% - {2," + ParallelTotal.ToString().Length + "}. {3,-16} - {4}",
+				group, percent, ParallelCount, computer.Name, result);
 		}
 	}
 
@@ -672,8 +681,8 @@ public class List_Domain_Computers
 
 	static string FillSqlVersion(Computer computer)
 	{
-		computer.SqlInstance = string.Join(";", GetSqlInstances(computer.Address));
-		return computer.SqlInstance;
+		computer.SQL = string.Join(";", GetSqlInstances(computer.Address));
+		return computer.SQL;
 	}
 
 	#endregion
@@ -694,14 +703,15 @@ public class List_Domain_Computers
 		public string Address { get; set; }
 		public string MAC { get; set; }
 		public string Name { get; set; }
-		public string Os { get; set; }
-		public string OsVersion { get; set; }
-		public string OsPack { get; set; }
+		public string OS { get; set; }
+		public string Version { get; set; }
+		public string SP { get; set; }
 		[XmlIgnore] public string SamAccountName { get; set; }
 		[XmlIgnore] public string UserPrincipalName { get; set; }
 		public DateTime? LastLogon { get; set; }
 		public string OpenPort { get; set; }
-		public string SqlInstance { get; set; }
+		public string SQL { get; set; }
+		public string Description { get; set; }
 	}
 
 	static void Serialize<T>(T o, string path)
