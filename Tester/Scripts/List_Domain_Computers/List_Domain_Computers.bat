@@ -82,7 +82,7 @@ IF "%ver%"=="2" SET COMPLUS_ApplicationMigrationRuntimeActivationConfigPath=
 GOTO:EOF
 
 :CFG
-:: Create configuration file which will force powershell to run .NET 4 CLR.
+:: Create configuration file which will force PowerShell to run .NET 4 CLR.
 IF EXIST "%pcf%" GOTO:EOF
 ECHO Create %pcf%
 ECHO.^<?xml version="1.0" encoding="utf-8" ?^>                 > "%pcf%"
