@@ -43,18 +43,54 @@ pause
 GOTO:EOF
 
 :PS
+::@echo on
+::SETLOCAL EnableDelayedExpansion
+SET pcf=%~dp0powershell.exe.activation_config
+SET pse=PowerShell.exe
+:: Get PowerShell version.
+PowerShell.exe "exit $PSVersionTable.PSVersion.Major"
+SET ver=%errorlevel%
+ECHO PowerShell v%ver%
+:: PS: Create config if PowerShell version is old.
+IF "%ver%"=="2" CALL:CFG
+IF "%ver%"=="2" SET pse=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe
+IF "%ver%"=="2" SET COMPLUS_ApplicationMigrationRuntimeActivationConfigPath=%~dp0
+::ECHO pse=%pse%
+::ECHO com=%COMPLUS_ApplicationMigrationRuntimeActivationConfigPath%
 :: Run script.
 SET csFile=%cdir%%file%.cs
 SET u1=System.Configuration
 SET u2=System.Configuration.Install
 SET u3=System.Xml
-SET u4=System.DirectoryServices
-SET u5=System.DirectoryServices.AccountManagement
+SET u4=System.Xml.Linq
+SET u5=System.Core
+SET u6=System.Data
+SET u7=System.DirectoryServices
+SET u8=System.DirectoryServices.AccountManagement
+::"%pse%" ^
+::Set-ExecutionPolicy ByPass; ^
+::$PSVersionTable;
 :: Run script.
-PowerShell.exe ^
+"%pse%" ^
 Set-ExecutionPolicy RemoteSigned; ^
-$source = Get-Content -Raw -Path '%csFile%'; ^
-Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%','%u4%','%u5%'); ^
+$source = [IO.File]::ReadAllText('%csFile%'); ^
+Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%','%u4%','%u5%','%u6%','%u7%','%u8%'); ^
 $args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
 [%file%]::ProcessArguments($args)
+:: PS: Clear configuration property
+IF "%ver%"=="2" SET COMPLUS_ApplicationMigrationRuntimeActivationConfigPath=
+GOTO:EOF
+
+:CFG
+:: Create configuration file which will force powershell to run .NET 4 CLR.
+IF EXIST "%pcf%" GOTO:EOF
+ECHO Create %pcf%
+ECHO.^<?xml version="1.0" encoding="utf-8" ?^>                 > "%pcf%"
+ECHO.^<configuration^>                                        >> "%pcf%"
+ECHO.  ^<startup useLegacyV2RuntimeActivationPolicy="true"^>  >> "%pcf%"
+::ECHO.    ^<supportedRuntime version="v4.0"/^>                 >> "%pcf%"
+ECHO.    ^<supportedRuntime version="v4.0.30319"/^>           >> "%pcf%"
+ECHO.    ^<supportedRuntime version="v2.0.50727"/^>           >> "%pcf%"
+ECHO.  ^</startup^>                                           >> "%pcf%"
+ECHO.^</configuration^>                                       >> "%pcf%"
 GOTO:EOF
