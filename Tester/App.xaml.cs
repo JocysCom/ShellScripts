@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace JocysCom.XmlTransform.Tester
+namespace JocysCom.Shell.Scripts.Tester
 {
     /// <summary>
     /// Interaction logic for App.xaml

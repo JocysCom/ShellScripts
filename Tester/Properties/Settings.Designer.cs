@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace JocysCom.XmlTransform.Tester.Properties {
+namespace JocysCom.Shell.Scripts.Tester.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
