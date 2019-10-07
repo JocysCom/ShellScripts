@@ -37,8 +37,9 @@ SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
 :: <script> <working_folder> <pattern> <data_file>
-CALL:PS "www.google.com" "443" "127.0.0.1" "0"
-CALL:PS "www.google.com" "443"
+CALL:PS /TaskFile="Goole.xml"
+::CALL:PS /TaskFile="Goole.xml" /Protocol=TCP /DA="www.google.com"
+::CALL:PS /TaskFile="Goole.xml" /Protocol=TCP /DA="www.google.com" /DP=443 /SA="127.0.0.1" /SP=0
 ECHO.
 pause
 GOTO:EOF

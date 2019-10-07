@@ -1,32 +1,80 @@
 using System;
+using System.Collections.Generic;
+using System.Configuration.Install;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Serialization;
 
 public class IsPortOpen
 {
 
 	public static int ProcessArguments(string[] args)
 	{
-		//Console.WriteLine("Args: {0}", string.Join(", ", args));
-		Console.Title = "Testing TCP Ports";
-		Console.WriteLine("Testing TCP Port...");
-		var destinationAddress = args[1];
-		int destinationPort = int.Parse(args[2]);
-		var sourceAddress = args[3];
-		int sourceport;
-		int.TryParse(args[4], out sourceport);
-		var isOpen = _IsPortOpen(destinationAddress, destinationPort, 20000, 1, false, sourceAddress, sourceport);
-		Console.WriteLine();
-		Console.WriteLine("    Source Address: {0}", sourceAddress);
-		Console.WriteLine("    Source Port: {0}", sourceport);
-		Console.WriteLine("    Destination Address: {0}", destinationAddress);
-		Console.WriteLine("    Destination Port: {0}", destinationPort);
-		Console.Write("    Port is Open: ");
-		var org = Console.ForegroundColor;
-		Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
-		Console.Write("{0}", isOpen);
-		Console.ForegroundColor = org;
+		Console.Title = "Testing Ports";
+		Console.WriteLine("Testing Port...");
+		var ic = new InstallContext(null, args);
+		var taskFile = (ic.Parameters["TaskFile"] ?? "").Replace("\"", "");
+		var computer = (ic.Parameters["Computer"] ?? "").Replace("\"", "");
+		var protocol = (ic.Parameters["Protocol"] ?? "").Replace("\"", "");
+		var pSourceAddress = (ic.Parameters["SA"] ?? "").Replace("\"", "");
+		var pSourcePort = (ic.Parameters["SP"] ?? "").Replace("\"", "");
+		var pDestinationAddress = (ic.Parameters["DA"] ?? "").Replace("\"", "");
+		var pDestinationPort = (ic.Parameters["DP"] ?? "").Replace("\"", "");
+		// Set default protocol.
+		if (string.IsNullOrEmpty(protocol))
+			protocol = "TCP";
+		// Get ports
+		int sourcePort;
+		int destinationPort;
+		int.TryParse(pSourcePort, out sourcePort);
+		int.TryParse(pDestinationPort, out destinationPort);
+		var tasks = new PortTasks();
+		// Save task.
+		if (!string.IsNullOrEmpty(taskFile))
+		{
+			var fi = new FileInfo(taskFile);
+			if (!fi.Exists)
+			{
+				var task = new PortTask();
+				task.Computer = computer;
+				task.Protocol = protocol;
+				task.SourceAddress = pSourceAddress;
+				task.SourcePort = sourcePort;
+				task.DestinationAddress = pDestinationAddress;
+				task.DestinationPort = destinationPort;
+				task.ErrorCode = 0;
+				task.ErrorMessage = "";
+				tasks.Items.Add(task);
+				tasks.Items.Add(task);
+				Serialize(tasks, taskFile);
+
+			}
+		}
+		else
+		{
+			tasks = Deserialize<PortTasks>(taskFile);
+		}
+		var format = "{0,4} {1,16} {2,4} {1,16} {1,5} {1,16} {1,5}";
+		var result = " {0,5}";
+		Console.WriteLine(format + result, "ID", "Computer", "Type", "Source Host", "SRC Port", "Destination Host", "DST Port", "Open");
+		var s04 = "----";
+		var s05 = "-----";
+		var s16 = "----------------";
+		Console.WriteLine(format + result, s04, s16, s04, s16, s05, s16, s05);
+		for (int i = 0; i < tasks.Items.Count; i++)
+		{
+			var task = tasks.Items[i];
+			var isOpen = _IsPortOpen(pDestinationAddress, destinationPort, 20000, 1, false, pSourceAddress, sourcePort);
+			Console.WriteLine();
+			Console.Write(format, i, computer, protocol, pSourceAddress, sourcePort, pDestinationAddress, destinationPort);
+			var org = Console.ForegroundColor;
+			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
+			Console.WriteLine(result, isOpen);
+			Console.ForegroundColor = org;
+		}
 		Console.WriteLine();
 		Console.WriteLine();
 		return 0;
@@ -110,6 +158,56 @@ public class IsPortOpen
 		return false;
 	}
 
+	static T Deserialize<T>(string path)
+	{
+		if (!File.Exists(path))
+			return default(T);
+		var xml = File.ReadAllText(path);
+		var sr = new StringReader(xml);
+		var settings = new XmlReaderSettings();
+		settings.DtdProcessing = DtdProcessing.Ignore;
+		settings.XmlResolver = null;
+		var reader = XmlReader.Create(sr, settings);
+		var serializer = new XmlSerializer(typeof(T), new Type[] { typeof(T) });
+		var o = (T)serializer.Deserialize(reader);
+		reader.Dispose();
+		return o;
+	}
 
+	static void Serialize<T>(T o, string path)
+	{
+		var settings = new XmlWriterSettings();
+		//settings.OmitXmlDeclaration = true;
+		settings.Encoding = System.Text.Encoding.UTF8;
+		settings.Indent = true;
+		settings.IndentChars = "\t";
+		var serializer = new XmlSerializer(typeof(T));
+		// Serialize in memory first, so file will be locked for shorter times.
+		var ms = new MemoryStream();
+		var xw = XmlWriter.Create(ms, settings);
+		serializer.Serialize(xw, o);
+		File.WriteAllBytes(path, ms.ToArray());
+	}
 
+}
+
+[XmlRoot("PortTasks")]
+public class PortTasks
+{
+	public PortTasks() { Items = new List<PortTask>(); }
+	[XmlElement("PortTask")]
+	public List<PortTask> Items { get; set; }
+}
+
+public class PortTask
+{
+	/// <summary>Computer to run test on.</summary>
+	[XmlAttribute] public string Computer { get; set; }
+	[XmlAttribute] public string Protocol { get; set; }
+	[XmlAttribute] public string DestinationAddress { get; set; }
+	[XmlAttribute] public int DestinationPort { get; set; }
+	[XmlAttribute] public string SourceAddress { get; set; }
+	[XmlAttribute] public int SourcePort { get; set; }
+	[XmlAttribute] public int ErrorCode { get; set; }
+	[XmlAttribute] public string ErrorMessage { get; set; }
 }
