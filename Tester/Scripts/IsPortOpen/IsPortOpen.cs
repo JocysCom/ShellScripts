@@ -56,6 +56,7 @@ public class IsPortOpen
 			}
 		}
 
+		var sa = "Source Address";
 		var mn = Environment.MachineName;
 		// Get maximum computer length.
 		var maxCHost = tasks.Items.Max(x => (x.Computer ?? "").Length);
@@ -63,12 +64,12 @@ public class IsPortOpen
 		maxCHost = Math.Max(maxCHost, mn.Length);
 		// Get maximum source host length.
 		var maxSHost = tasks.Items.Max(x => (x.SourceAddress ?? "").Length);
-		maxSHost = Math.Max(maxSHost, "Source Host".Length);
+		maxSHost = Math.Max(maxSHost, sa.Length);
 		// Get destination source host length.
 		var maxDHost = tasks.Items.Max(x => (x.DestinationAddress ?? "").Length);
 		maxDHost = Math.Max(maxDHost, "Destination Host".Length);
 		var format = "{0,4} {1,-" + maxCHost + "} {2,-4} {3,-" + maxSHost + "} {4,5} {5,-" + maxDHost + "} {6,5}";
-		Console.WriteLine(format + " {7,-5}", "Test", "Computer", "Type", "Source Host", "Port", "Destination Host", "Port", "Open");
+		Console.WriteLine(format + " {7,-5}", "Test", "Computer", "Type", sa, "Port", "Destination Host", "Port", "Open");
 		var s04 = new string('-', 4);
 		var s05 = new string('-', 5);
 		var sCH = new string('-', maxCHost);
