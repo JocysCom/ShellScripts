@@ -14,8 +14,6 @@ public class IsPortOpen
 	public static int ProcessArguments(string[] args)
 	{
 		Console.Title = "Testing Ports";
-		Console.WriteLine("Testing Ports...");
-		Console.WriteLine();
 		var ic = new InstallContext(null, args);
 		var taskFile = (ic.Parameters["TaskFile"] ?? "").Replace("\"", "");
 		var computer = (ic.Parameters["Computer"] ?? "").Replace("\"", "");
@@ -57,23 +55,21 @@ public class IsPortOpen
 			}
 		}
 		var format = "{0,4} {1,-16} {2,-4} {3,-16} {4,5} {5,-16} {6,5}";
-		Console.WriteLine(format + " {7,5}", "ID", "Computer", "Type", "Source Host", "Port", "Destination Host", "Port", "Open");
+		Console.WriteLine(format + " {7,-5}", "Test", "Computer", "Type", "Source Host", "Port", "Destination Host", "Port", "Open");
 		var s04 = "----";
 		var s05 = "-----";
 		var s16 = "----------------";
-		Console.WriteLine(format + " {7,5}", s04, s16, s04, s16, s05, s16, s05, s05);
+		Console.WriteLine(format + " {7,-5}", s04, s16, s04, s16, s05, s16, s05, s05);
 		for (int i = 0; i < tasks.Items.Count; i++)
 		{
 			var task = tasks.Items[i];
 			var isOpen = _IsPortOpen(task.DestinationAddress, task.DestinationPort, 20000, 1, false, task.SourceAddress, task.SourcePort);
-			Console.Write(format, i, task.Computer, task.Protocol, task.SourceAddress, task.SourcePort, task.DestinationAddress, task.DestinationPort);
+			Console.Write(format, i + 1, task.Computer, task.Protocol, task.SourceAddress, task.SourcePort, task.DestinationAddress, task.DestinationPort);
 			var org = Console.ForegroundColor;
 			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
-			Console.WriteLine(" {0,5}", isOpen);
+			Console.WriteLine(" {0,-5}", isOpen);
 			Console.ForegroundColor = org;
 		}
-		Console.WriteLine();
-		Console.WriteLine();
 		return 0;
 	}
 

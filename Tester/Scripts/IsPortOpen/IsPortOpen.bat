@@ -37,7 +37,7 @@ SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
 :: <script> <working_folder> <pattern> <data_file>
-CALL:PS /TaskFile=Google.xml
+CALL:PS "/TaskFile=Google.xml"
 ::CALL:PS /TaskFile="Goole.xml" /Protocol=TCP /DA="www.google.com"
 ::CALL:PS /TaskFile="Goole.xml" /Protocol=TCP /DA="www.google.com" /DP=443 /SA="127.0.0.1" /SP=0
 ECHO.
