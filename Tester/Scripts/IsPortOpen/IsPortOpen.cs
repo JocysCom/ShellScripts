@@ -14,7 +14,8 @@ public class IsPortOpen
 	public static int ProcessArguments(string[] args)
 	{
 		Console.Title = "Testing Ports";
-		Console.WriteLine("Testing Port...");
+		Console.WriteLine("Testing Ports...");
+		Console.WriteLine();
 		var ic = new InstallContext(null, args);
 		var taskFile = (ic.Parameters["TaskFile"] ?? "").Replace("\"", "");
 		var computer = (ic.Parameters["Computer"] ?? "").Replace("\"", "");
@@ -36,7 +37,11 @@ public class IsPortOpen
 		if (!string.IsNullOrEmpty(taskFile))
 		{
 			var fi = new FileInfo(taskFile);
-			if (!fi.Exists)
+			if (fi.Exists)
+			{
+				tasks = Deserialize<PortTasks>(taskFile);
+			}
+			else
 			{
 				var task = new PortTask();
 				task.Computer = computer;
@@ -48,31 +53,23 @@ public class IsPortOpen
 				task.ErrorCode = 0;
 				task.ErrorMessage = "";
 				tasks.Items.Add(task);
-				tasks.Items.Add(task);
 				Serialize(tasks, taskFile);
-
 			}
 		}
-		else
-		{
-			tasks = Deserialize<PortTasks>(taskFile);
-		}
-		var format = "{0,4} {1,16} {2,4} {1,16} {1,5} {1,16} {1,5}";
-		var result = " {0,5}";
-		Console.WriteLine(format + result, "ID", "Computer", "Type", "Source Host", "SRC Port", "Destination Host", "DST Port", "Open");
+		var format = "{0,4} {1,-16} {2,-4} {3,-16} {4,5} {5,-16} {6,5}";
+		Console.WriteLine(format + " {7,5}", "ID", "Computer", "Type", "Source Host", "Port", "Destination Host", "Port", "Open");
 		var s04 = "----";
 		var s05 = "-----";
 		var s16 = "----------------";
-		Console.WriteLine(format + result, s04, s16, s04, s16, s05, s16, s05);
+		Console.WriteLine(format + " {7,5}", s04, s16, s04, s16, s05, s16, s05, s05);
 		for (int i = 0; i < tasks.Items.Count; i++)
 		{
 			var task = tasks.Items[i];
-			var isOpen = _IsPortOpen(pDestinationAddress, destinationPort, 20000, 1, false, pSourceAddress, sourcePort);
-			Console.WriteLine();
-			Console.Write(format, i, computer, protocol, pSourceAddress, sourcePort, pDestinationAddress, destinationPort);
+			var isOpen = _IsPortOpen(task.DestinationAddress, task.DestinationPort, 20000, 1, false, task.SourceAddress, task.SourcePort);
+			Console.Write(format, i, task.Computer, task.Protocol, task.SourceAddress, task.SourcePort, task.DestinationAddress, task.DestinationPort);
 			var org = Console.ForegroundColor;
 			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
-			Console.WriteLine(result, isOpen);
+			Console.WriteLine(" {0,5}", isOpen);
 			Console.ForegroundColor = org;
 		}
 		Console.WriteLine();

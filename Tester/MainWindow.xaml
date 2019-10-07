@@ -35,6 +35,7 @@
 		<Button x:Name="TestSSLSupportButton" Content="Test SSL Support" Margin="10,180,0,0" Padding="8,0,8,0" Click="TestSSLSupportButton_Click" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" />
 		<Button x:Name="TestDomainTlsSupportButton" Content="Test Domain TLS Support" Margin="183,180,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="TestDomainTlsSupportButton_Click" />
 		<Button x:Name="RsaForSqlButton" Content="RSA for SQL" Margin="356,130,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="RsaForSqlButton_Click" />
+		<Button x:Name="IsPortOpenButton" Content="Is Port Open" Margin="356,155,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="IsPortOpenButton_Click" />
 
 	</Grid>
 </Window>

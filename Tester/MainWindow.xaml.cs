@@ -102,6 +102,12 @@ namespace JocysCom.Shell.Scripts.Tester
 			Prepare<RSA_for_SQL>();
 			var result = RSA_for_SQL.ProcessArguments();
 		}
+
+		private void IsPortOpenButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<IsPortOpen>();
+			var result = IsPortOpen.ProcessArguments(new string[] { "/TaskFile=Google.xml" });
+		}
 	}
 }
 
