@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -54,17 +55,35 @@ public class IsPortOpen
 				Serialize(tasks, taskFile);
 			}
 		}
-		var format = "{0,4} {1,-16} {2,-4} {3,-16} {4,5} {5,-16} {6,5}";
+
+		var mn = Environment.MachineName;
+		// Get maximum computer length.
+		var maxCHost = tasks.Items.Max(x => (x.Computer ?? "").Length);
+		maxCHost = Math.Max(maxCHost, "Computer".Length);
+		maxCHost = Math.Max(maxCHost, mn.Length);
+		// Get maximum source host length.
+		var maxSHost = tasks.Items.Max(x => (x.SourceAddress ?? "").Length);
+		maxSHost = Math.Max(maxSHost, "Source Host".Length);
+		// Get destination source host length.
+		var maxDHost = tasks.Items.Max(x => (x.DestinationAddress ?? "").Length);
+		maxDHost = Math.Max(maxDHost, "Destination Host".Length);
+		var format = "{0,4} {1,-" + maxCHost + "} {2,-4} {3,-" + maxSHost + "} {4,5} {5,-" + maxDHost + "} {6,5}";
 		Console.WriteLine(format + " {7,-5}", "Test", "Computer", "Type", "Source Host", "Port", "Destination Host", "Port", "Open");
-		var s04 = "----";
-		var s05 = "-----";
-		var s16 = "----------------";
-		Console.WriteLine(format + " {7,-5}", s04, s16, s04, s16, s05, s16, s05, s05);
+		var s04 = new string('-', 4);
+		var s05 = new string('-', 5);
+		var sCH = new string('-', maxCHost);
+		var sSH = new string('-', maxSHost);
+		var sDH = new string('-', maxDHost);
+		Console.WriteLine(format + " {7,-5}", s04, sCH, s04, sSH, s05, sDH, s05, s05);
 		for (int i = 0; i < tasks.Items.Count; i++)
 		{
 			var task = tasks.Items[i];
 			var isOpen = _IsPortOpen(task.DestinationAddress, task.DestinationPort, 20000, 1, false, task.SourceAddress, task.SourcePort);
-			Console.Write(format, i + 1, task.Computer, task.Protocol, task.SourceAddress, task.SourcePort, task.DestinationAddress, task.DestinationPort);
+			var comp = task.Computer;
+			if (string.IsNullOrEmpty(comp))
+				comp = mn;
+			var sp = task.SourcePort > 0 ? task.SourcePort.ToString() : "any";
+			Console.Write(format, i + 1, mn, task.Protocol, task.SourceAddress, sp, task.DestinationAddress, task.DestinationPort);
 			var org = Console.ForegroundColor;
 			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
 			Console.WriteLine(" {0,-5}", isOpen);
