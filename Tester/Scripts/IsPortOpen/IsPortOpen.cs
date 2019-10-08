@@ -14,7 +14,7 @@ public class IsPortOpen
 
 	public static int ProcessArguments(string[] args)
 	{
-		Console.Title = "Testing Ports";
+		Console.Title = string.Format("Testing Ports from {0}", Environment.MachineName);
 		var ic = new InstallContext(null, args);
 		var taskFile = (ic.Parameters["TaskFile"] ?? "").Replace("\"", "");
 		var computer = (ic.Parameters["Computer"] ?? "").Replace("\"", "");
@@ -35,6 +35,7 @@ public class IsPortOpen
 		// Save task.
 		if (!string.IsNullOrEmpty(taskFile))
 		{
+			Console.Title += string.Format(" - {0}", taskFile);
 			var fi = new FileInfo(taskFile);
 			if (fi.Exists)
 			{
@@ -55,7 +56,6 @@ public class IsPortOpen
 				Serialize(tasks, taskFile);
 			}
 		}
-
 		var sa = "Source Address";
 		var mn = Environment.MachineName;
 		// Get maximum computer length.
