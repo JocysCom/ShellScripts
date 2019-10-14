@@ -97,6 +97,7 @@ AS
 SELECT NEWID() AS uniqueidentifier
 GO
 ```
+
 <hr />
 
 ```TSQL
@@ -143,6 +144,7 @@ BEGIN
 	DECLARE @base64 varchar(max) = (SELECT @salt_hash_bin FOR XML PATH(''), BINARY BASE64)
 	RETURN @base64
 END```
+
 <hr />
 
 ```TSQL
@@ -176,6 +178,7 @@ BEGIN
 	RETURN 0
 END
 ```
+
 # SQL functions in C#
 
 Example:
@@ -198,7 +201,6 @@ IsValidPassword:
 Results:
   IsValid: True, base64: KuuEYY3HmctDUOwrjg8UYxjBoZFy0ac2iiJKBB9wQkg=
 ```
-
 
 <hr />
 
@@ -234,6 +236,7 @@ public static string HashPassword(string password, int security = 256)
 	return base64;
 }
 ```
+
 <hr />
 
 ```C#
