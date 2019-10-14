@@ -143,7 +143,8 @@ BEGIN
 	-- Convert salt and hash to Base64 string.
 	DECLARE @base64 varchar(max) = (SELECT @salt_hash_bin FOR XML PATH(''), BINARY BASE64)
 	RETURN @base64
-END```
+END
+```
 
 <hr />
 
