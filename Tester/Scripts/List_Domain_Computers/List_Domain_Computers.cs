@@ -603,13 +603,22 @@ public class List_Domain_Computers
 
 	static int ParallelCount;
 	static int ParallelTotal;
-	static object ParalelReportLock = new object();
+	static object ParallelReportLock = new object();
+	static string ParalelLineFormat;
 
-	public static void ParallelAction(List<Computer> computers, Func<Computer, string> action, string group, int parallelTasks = 16)
+	static void ParallelReport(string format, params object[] args)
+	{
+		var value = string.Format(format, args);
+		Console.Write(value);
+	}
+
+	public static void ParallelAction(List<Computer> settingsList, Func<Computer, string> action, string group, int parallelTasks = 16)
 	{
 		ParallelCount = 0;
-		ParallelTotal = computers.Count;
-		Parallel.ForEach(computers,
+		ParallelTotal = settingsList.Count;
+		var maxName = settingsList.Max(x => x.Name.Length);
+		ParalelLineFormat = "{0} {1,5:0.0}% - {2," + ParallelTotal.ToString().Length + "}. {3,-" + maxName + "} - {4}\r\n";
+		Parallel.ForEach(settingsList,
 		new ParallelOptions { MaxDegreeOfParallelism = parallelTasks },
 		   x => ParallelItemAction(x, action, group)
 		);
@@ -627,12 +636,11 @@ public class List_Domain_Computers
 			result = string.Format("Exception: {0}", ex.Message);
 		}
 		// Report.
-		lock (ParalelReportLock)
+		lock (ParallelReportLock)
 		{
 			System.Threading.Interlocked.Increment(ref ParallelCount);
 			var percent = (decimal)ParallelCount / (decimal)ParallelTotal * 100m;
-			Console.WriteLine("{0} {1,5:0.0}% - {2," + ParallelTotal.ToString().Length + "}. {3,-16} - {4}",
-				group, percent, ParallelCount, computer.Name, result);
+			ParallelReport(ParalelLineFormat, group, percent, ParallelCount, computer.Name, result);
 		}
 	}
 
