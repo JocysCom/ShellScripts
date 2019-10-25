@@ -33,7 +33,32 @@ public class IsPortOpen
 		int.TryParse(pDestinationPort, out destinationPort);
 		var tasks = new PortTasks();
 		// Save task.
-		if (!string.IsNullOrEmpty(taskFile))
+		if (string.IsNullOrEmpty(taskFile))
+		{
+			// Get local configurations.
+			var keys = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			var files = System.IO.Directory.GetFiles(".", "*.xml")
+				.OrderBy(x => x)
+				.Take(keys.Length)
+				.Select(x => new FileInfo(x))
+				.ToList();
+			if (files.Count > 0)
+			{
+				Console.WriteLine("Select configuration:");
+				Console.WriteLine("");
+				for (int i = 0; i < files.Count; i++)
+				{
+					var file = files[i];
+					var name = Path.GetFileNameWithoutExtension(file.Name);
+					Console.WriteLine("    {0} - {1}", keys[i], name);
+
+				}
+				Console.WriteLine();
+				Console.Write("Type Number or press ENTER to exit: ");
+				var key = Console.ReadKey(true);
+			}
+		}
+		else
 		{
 			Console.Title += string.Format(" - {0}", taskFile);
 			var fi = new FileInfo(taskFile);
