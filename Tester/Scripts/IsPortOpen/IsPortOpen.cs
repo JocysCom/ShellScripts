@@ -32,6 +32,7 @@ public class IsPortOpen
 		int.TryParse(pSourcePort, out sourcePort);
 		int.TryParse(pDestinationPort, out destinationPort);
 		var tasks = new PortTasks();
+		FileInfo fi = null;
 		// Save task.
 		if (string.IsNullOrEmpty(taskFile))
 		{
@@ -56,30 +57,35 @@ public class IsPortOpen
 				Console.WriteLine();
 				Console.Write("Type Number or press ENTER to exit: ");
 				var key = Console.ReadKey(true);
+				Console.WriteLine(key.KeyChar);
+				Console.WriteLine();
+				var keyIndex = keys.IndexOf(key.KeyChar);
+				if (keyIndex  > -1)
+					taskFile = files[keyIndex].Name;
 			}
+		}
+		if (!string.IsNullOrEmpty(taskFile))
+		{
+			fi = new FileInfo(taskFile);
+		}
+		Console.Title += string.Format(" - {0}", taskFile);
+		if (fi != null && fi.Exists)
+		{
+			tasks = Deserialize<PortTasks>(taskFile);
 		}
 		else
 		{
-			Console.Title += string.Format(" - {0}", taskFile);
-			var fi = new FileInfo(taskFile);
-			if (fi.Exists)
-			{
-				tasks = Deserialize<PortTasks>(taskFile);
-			}
-			else
-			{
-				var task = new PortTask();
-				task.Computer = computer;
-				task.Protocol = protocol;
-				task.SourceAddress = pSourceAddress;
-				task.SourcePort = sourcePort;
-				task.DestinationAddress = pDestinationAddress;
-				task.DestinationPort = destinationPort;
-				task.ErrorCode = 0;
-				task.ErrorMessage = "";
-				tasks.Items.Add(task);
-				Serialize(tasks, taskFile);
-			}
+			var task = new PortTask();
+			task.Computer = computer;
+			task.Protocol = protocol;
+			task.SourceAddress = pSourceAddress;
+			task.SourcePort = sourcePort;
+			task.DestinationAddress = pDestinationAddress;
+			task.DestinationPort = destinationPort;
+			task.ErrorCode = 0;
+			task.ErrorMessage = "";
+			tasks.Items.Add(task);
+			Serialize(tasks, taskFile);
 		}
 		var sa = "Source Address";
 		var mn = Environment.MachineName;
