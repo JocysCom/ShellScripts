@@ -14,7 +14,7 @@ public class IsPortOpen
 
 	public static int ProcessArguments(string[] args)
 	{
-		Console.Title = string.Format("Testing Ports from {0}", Environment.MachineName);
+		Console.Title = string.Format("Testing Ports from {0} computer.", Environment.MachineName);
 		var ic = new InstallContext(null, args);
 		var taskFile = (ic.Parameters["TaskFile"] ?? "").Replace("\"", "");
 		var computer = (ic.Parameters["Computer"] ?? "").Replace("\"", "");
@@ -68,7 +68,7 @@ public class IsPortOpen
 		{
 			fi = new FileInfo(taskFile);
 		}
-		Console.Title += string.Format(" - {0}", taskFile);
+		Console.Title += string.Format(" Configuration: {0}", taskFile);
 		if (fi != null && fi.Exists)
 		{
 			tasks = Deserialize<PortTasks>(taskFile);
