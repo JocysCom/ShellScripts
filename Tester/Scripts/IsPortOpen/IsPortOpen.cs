@@ -45,7 +45,7 @@ public class IsPortOpen
 				.ToList();
 			if (files.Count > 0)
 			{
-				Console.WriteLine("Select configuration:");
+				Console.WriteLine("Select configuration file:");
 				Console.WriteLine("");
 				for (int i = 0; i < files.Count; i++)
 				{
@@ -99,14 +99,26 @@ public class IsPortOpen
 		// Get destination source host length.
 		var maxDHost = tasks.Items.Max(x => (x.DestinationAddress ?? "").Length);
 		maxDHost = Math.Max(maxDHost, "Destination Host".Length);
-		var format = "{0,4} {1,-" + maxCHost + "} {2,-4} {3,-" + maxSHost + "} {4,5} {5,-" + maxDHost + "} {6,5}";
-		Console.WriteLine(format + " {7,-5}", "Test", "Computer", "Type", sa, "Port", "Destination Host", "Port", "Open");
+		// Get description length.	
+		var maxDesc = tasks.Items.Max(x => (x.Description ?? "").Length);
+		maxDesc = Math.Max(maxDesc, "Description".Length);
+		var format1 = "{0,4} {1,-" + maxCHost + "} {2,-4} {3,-" + maxSHost + "} {4,5} {5,-" + maxDHost + "} {6,5}";
+		var formatO = " {0,-5}";
+		var formatD = " {0,-" + maxDesc + "}";
+		Console.Write(format1, "Test", "Computer", "Type", sa, "Port", "Destination Host", "Port");
+		Console.Write(formatO, "Open");
+		Console.WriteLine(formatD, "Description");
+		// Add header separator.
 		var s04 = new string('-', 4);
 		var s05 = new string('-', 5);
 		var sCH = new string('-', maxCHost);
 		var sSH = new string('-', maxSHost);
 		var sDH = new string('-', maxDHost);
-		Console.WriteLine(format + " {7,-5}", s04, sCH, s04, sSH, s05, sDH, s05, s05);
+		var sD = new string('-', maxDesc);
+		Console.Write(format1, s04, sCH, s04, sSH, s05, sDH, s05);
+		Console.Write(formatO, s05);
+		Console.WriteLine(formatD, sD);
+		// Add lines.
 		for (int i = 0; i < tasks.Items.Count; i++)
 		{
 			var task = tasks.Items[i];
@@ -115,11 +127,14 @@ public class IsPortOpen
 			if (string.IsNullOrEmpty(comp))
 				comp = mn;
 			var sp = task.SourcePort > 0 ? task.SourcePort.ToString() : "any";
-			Console.Write(format, i + 1, mn, task.Protocol, task.SourceAddress, sp, task.DestinationAddress, task.DestinationPort);
+			Console.Write(format1, i + 1, mn, task.Protocol, task.SourceAddress, sp, task.DestinationAddress, task.DestinationPort);
+			// Write result.
 			var org = Console.ForegroundColor;
 			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
-			Console.WriteLine(" {0,-5}", isOpen);
+			Console.Write(formatO, isOpen);
 			Console.ForegroundColor = org;
+			// Add description.
+			Console.WriteLine(formatD, task.Description);
 		}
 		return 0;
 	}
@@ -254,4 +269,5 @@ public class PortTask
 	[XmlAttribute] public int SourcePort { get; set; }
 	[XmlAttribute] public int ErrorCode { get; set; }
 	[XmlAttribute] public string ErrorMessage { get; set; }
+	[XmlAttribute] public string Description { get; set; }
 }
