@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Jocys.com Shell Scripts Tester" Height="336" Width="640" Icon="App.ico" Closing="Window_Closing">
+        Title="Jocys.com Shell Scripts Tester" Height="378.634" Width="640" Icon="App.ico" Closing="Window_Closing" SnapsToDevicePixels="True" UseLayoutRounding="True">
 	<Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0,0,0,2">
 		<GroupBox Header="Transform Folder" Height="auto" Margin="8" Padding="8" VerticalAlignment="Top">
 			<Grid >
@@ -36,6 +36,10 @@
 		<Button x:Name="TestDomainTlsSupportButton" Content="Test Domain TLS Support" Margin="183,180,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="TestDomainTlsSupportButton_Click" />
 		<Button x:Name="RsaForSqlButton" Content="RSA for SQL" Margin="356,130,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="RsaForSqlButton_Click" />
 		<Button x:Name="IsPortOpenButton" Content="Is Port Open" Margin="356,155,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="IsPortOpenButton_Click" />
+		<Button x:Name="TestAsyncButton" Content="Test Async" Margin="356,180,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="TestAsyncButton_Click" />
+		<TextBox x:Name="TestAsyncTextBox" Margin="356,205,10,0" Height="20" VerticalAlignment="Top"/>
+		<TextBox x:Name="TestAsyncErrorTextBox" Margin="356,230,10,10" TextWrapping="Wrap" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+		<Button x:Name="TestSyncButton" Content="Test Sync" Margin="529,180,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="93" Height="20" VerticalAlignment="Top" Click="TestSyncButton_Click" />
 
 	</Grid>
 </Window>

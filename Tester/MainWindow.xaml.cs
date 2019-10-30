@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace JocysCom.Shell.Scripts.Tester
@@ -107,6 +110,63 @@ namespace JocysCom.Shell.Scripts.Tester
 		{
 			Prepare<IsPortOpen>();
 			var result = IsPortOpen.ProcessArguments(new string[] { "/TaskFile=Google.xml" });
+		}
+
+		async private void TestAsyncButton_Click(object sender, RoutedEventArgs e)
+		{
+			// Create a TaskScheduler that wraps the SynchronizationContext returned from
+			// System.Threading.SynchronizationContext.Current
+			// This is an object that handles the low-level work of queuing tasks onto main User Interface(GUI) thread.
+			var mainTaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+			TestAsyncTextBox.Text = string.Format("{0:mm:ss.fff}", DateTime.Now);
+			// Execute the task and then continue to execute lines on the same thread which started the task.
+			var result = await TestTaskAsync(1).ConfigureAwait(true);
+			TestAsyncTextBox.Text += ", " + result;
+			// Execute the task and continue execute lines on the thread which was used to do the task.
+			result = await TestTaskAsync(2).ConfigureAwait(false);
+			try
+			{
+				// This line will crash because task thread cannot access TextBox, because it belongs to the main GUI thread.
+				TestAsyncTextBox.Text += ", " + result;
+			}
+			catch (Exception ex)
+			{
+				//
+				await Task.Factory.StartNew(() =>
+					{
+						TestAsyncErrorTextBox.Text = ex.Message;
+						TestAsyncErrorTextBox.Text += "\r\n, " + result;
+					},
+					System.Threading.CancellationToken.None,
+					TaskCreationOptions.DenyChildAttach, mainTaskScheduler
+				);
+			}
+		}
+
+		async Task<string> TestTaskAsync(int value)
+		{
+			return await Task.Run(() =>
+			{
+				return TestTask(value);
+			}).ConfigureAwait(true);
+		}
+
+		string TestTask(int value)
+		{
+			// Create 5 second delay;
+			var i = 0;
+			var sw = new Stopwatch();
+			sw.Start();
+			while (sw.ElapsedMilliseconds < 3000)
+				i++;
+			return string.Format("{0}: {1}", value, i);
+		}
+
+		private void TestSyncButton_Click(object sender, RoutedEventArgs e)
+		{
+			var mainTaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+			var result = TestTask(1);
+			TestAsyncTextBox.Text = result;
 		}
 	}
 }
