@@ -19,7 +19,8 @@ public class Test_SSL_Support
 		var host = ic.Parameters["host"];
 		var port = int.Parse(ic.Parameters["port"] ?? "443");
 		var protocols = ((SslProtocols[])Enum.GetValues(typeof(SslProtocols))).ToList();
-		Console.Write("{0}:{1}\r\n\r\n", host, port);
+		var ips = GetHostAddresses(host);
+		Console.Write("{0} {1}:{2}\r\n\r\n", ips, host, port);
 		protocols.Remove(SslProtocols.Default);
 		protocols.Remove(SslProtocols.None);
 		for (int i = 0; i < protocols.Count; i++)
@@ -108,6 +109,25 @@ public class Test_SSL_Support
 	openssl s_client -connect imap.gmail.com:143 -starttls imap %cer%
 
 	*/
+
+	static string GetHostAddresses(string host)
+	{
+		string ips = null;
+		try
+		{
+			var ipaddress = Dns.GetHostAddresses(host);
+			var address = ipaddress
+				.Where(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+				// Exclude The 169 IP range of addresses is reserved by Microsoft for private network addressing
+				.Where(x => x.GetAddressBytes()[0] != 169)
+				.OrderBy(x => x.ToString())
+				.ToArray()
+				.FirstOrDefault();
+			ips = string.Join(" ", address);
+		}
+		catch { }
+		return ips;
+	}
 
 	/// <summary>
 	/// </summary>
