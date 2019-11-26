@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 
 public class Test_SSL_Support
 {
@@ -28,7 +27,7 @@ public class Test_SSL_Support
 			// Enable TLS 1.1, 1.2 and 1.3
 			var Tls11 = 0x0300; //   768
 			var Tls12 = 0x0C00; //  3072
-			//ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
+								//ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
 			ServicePointManager.SecurityProtocol |= (SecurityProtocolType)(Tls11 | Tls12);
 			var protocol = protocols[i];
 			var client = new System.Net.Sockets.TcpClient();
@@ -37,6 +36,7 @@ public class Test_SSL_Support
 			string exchangeAlgorithm = null;
 			string cipherAlgorithm = null;
 			string hashAlgorithm = null;
+			LastCertificateError = null;
 			try
 			{
 				client.Connect(host, port);
@@ -67,6 +67,17 @@ public class Test_SSL_Support
 			client.Close();
 			if (stream != null)
 				stream.Dispose();
+			var ex = LastCertificateError;
+			if (LastCertificateError != null)
+			{
+				var foreDefault = Console.ForegroundColor;
+				Console.ForegroundColor = ConsoleColor.DarkYellow;
+				Console.WriteLine();
+				Console.WriteLine("        " + ex.Message);
+				foreach (var key in ex.Data.Keys)
+					Console.WriteLine("        {0}: {1}", key, ex.Data[key]);
+				Console.ForegroundColor = foreDefault;
+			}
 		}
 		Console.WriteLine();
 		return 0;
@@ -144,6 +155,8 @@ public class Test_SSL_Support
 
 	#region Ignore invalid SSL Certificate
 
+	public static Exception LastCertificateError;
+
 	/// <summary>
 	/// The following method is invoked by the RemoteCertificateValidationDelegate.
 	/// Net.ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate
@@ -162,16 +175,8 @@ public class Test_SSL_Support
 			return true;
 		}
 		var allow = true;
-		string message = string.Format("Certificate error: {0}", sslPolicyErrors);
-		if (allow)
-		{
-			message += " Allow this client to communicate with unauthenticated server.";
-		}
-		else
-		{
-			message += " The underlying connection was closed.";
-		}
-		var ex = new Exception("Validate server certificate error");
+		var message = string.Format("Certificate error: {0}", sslPolicyErrors);
+		var ex = new Exception(message);
 		ex.Data.Add("AllowCertificateErrors", allow);
 		if (sender != null && sender is System.Net.HttpWebRequest)
 		{
@@ -183,8 +188,10 @@ public class Test_SSL_Support
 		}
 		if (certificate != null)
 		{
-			ex.Data.Add("Certificate.Issuer", certificate.Issuer);
 			ex.Data.Add("Certificate.Subject", certificate.Subject);
+			ex.Data.Add("Certificate.Issuer", certificate.Issuer);
+			ex.Data.Add("Certificate.Serial", certificate.GetSerialNumberString());
+			ex.Data.Add("Certificate.Expiration", certificate.GetExpirationDateString());
 		}
 		if (chain != null)
 		{
@@ -193,11 +200,7 @@ public class Test_SSL_Support
 				ex.Data.Add("Chain.ChainStatus(" + i + ")", string.Format("{0}, {1}", chain.ChainStatus[i].Status, chain.ChainStatus[i].StatusInformation));
 			}
 		}
-		Console.WriteLine(ex.Message);
-		foreach (var key in ex.Data.Keys)
-		{
-			Console.WriteLine("    {0}: {1}", key, ex.Data[key]);
-		}
+		LastCertificateError = ex;
 		// Allow (or not allow depending on setting value) this client to communicate with unauthenticated servers.
 		return allow;
 	}
