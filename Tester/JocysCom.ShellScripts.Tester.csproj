@@ -127,6 +127,7 @@
     <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
     <Compile Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.cs" />
     <Compile Include="Scripts\RSA_for_SQL\RSA_for_SQL.cs" />
+    <Compile Include="Scripts\Sync_Folders\Sync_Folders.cs" />
     <Compile Include="Scripts\Test_Domains\Test_Domains.cs" />
     <Compile Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.cs" />
     <Compile Include="Scripts\Test_SSL_Support\Test_SSL_Support.cs" />
@@ -211,6 +212,7 @@
     <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
     <None Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.bat" />
     <None Include="Scripts\RSA_for_SQL\RSA_for_SQL.bat" />
+    <None Include="Scripts\Sync_Folders\Sync_Folders.bat" />
     <None Include="Scripts\Test_Domains\Test_Domains.bat" />
     <None Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.bat" />
     <None Include="Scripts\Test_SSL_Support\Test_SSL_Support.bat" />
@@ -232,7 +234,11 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Scripts\Sync_Folders\Source\fileA.txt" />
+    <Resource Include="Scripts\Sync_Folders\Source\fileB.txt" />
+    <Resource Include="Scripts\Sync_Folders\Target\fileC.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
