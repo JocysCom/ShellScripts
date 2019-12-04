@@ -5,6 +5,7 @@ using System.Configuration.Install;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 
 public class Sync_Folders
 {
@@ -17,6 +18,8 @@ public class Sync_Folders
 		var ic = new InstallContext(null, args);
 		var source = ic.Parameters["source"];
 		var target = ic.Parameters["target"];
+		var saveDates = ic.Parameters.ContainsKey("save_dates");
+		var loadDates = ic.Parameters.ContainsKey("load_dates");
 		Console.WriteLine("Source: {0}", source);
 		Console.WriteLine("Target: {0}", target);
 		Console.WriteLine("Folder: {0}", Environment.CurrentDirectory);
@@ -32,21 +35,21 @@ public class Sync_Folders
 		var sourceData = sourceFiles.Select(x => new FileData()
 		{
 			SourceFI = x,
-			relativePath = x.FullName.Substring(sourceDI.FullName.Length + 1),
-			relativePathUpper = x.FullName.Substring(sourceDI.FullName.Length + 1).ToUpperInvariant()
+			RelativePath = x.FullName.Substring(sourceDI.FullName.Length + 1),
+			RelativePathUpper = x.FullName.Substring(sourceDI.FullName.Length + 1).ToUpperInvariant()
 		}).ToList();
 		var targetData = targetFiles.Select(x => new FileData()
 		{
 			TargetFI = x,
-			relativePath = x.FullName.Substring(targetDI.FullName.Length + 1),
-			relativePathUpper = x.FullName.Substring(targetDI.FullName.Length + 1).ToUpperInvariant(),
+			RelativePath = x.FullName.Substring(targetDI.FullName.Length + 1),
+			RelativePathUpper = x.FullName.Substring(targetDI.FullName.Length + 1).ToUpperInvariant(),
 		}).ToList();
 		// Map target files to source.
 		for (int i = 0; i < sourceData.Count; i++)
 		{
 			var sourceItem = sourceData[i];
-			var sourcePathUpper = sourceItem.relativePathUpper;
-			var targetItem = targetData.FirstOrDefault(x => x.relativePathUpper == sourcePathUpper);
+			var sourcePathUpper = sourceItem.RelativePathUpper;
+			var targetItem = targetData.FirstOrDefault(x => x.RelativePathUpper == sourcePathUpper);
 			if (targetItem != null)
 			{
 				sourceItem.TargetFI = targetItem.TargetFI;
@@ -55,33 +58,33 @@ public class Sync_Folders
 		}
 		Console.WriteLine();
 		for (int i = 0; i < sourceData.Count; i++)
-			Console.WriteLine("Source: {0}", sourceData[i].relativePath);
+			Console.WriteLine("Source: {0}", sourceData[i].RelativePath);
 		Console.WriteLine();
 		for (int i = 0; i < targetData.Count; i++)
-			Console.WriteLine("Target: {0}", targetData[i].relativePath);
+			Console.WriteLine("Target: {0}", targetData[i].RelativePath);
 		Console.WriteLine();
 		var targetDelete = targetData.Where(x => !x.Matched).ToList();
 		for (int i = 0; i < targetDelete.Count; i++)
-			Console.WriteLine("Delete: {0}", targetDelete[i].relativePath);
+			Console.WriteLine("Delete: {0}", targetDelete[i].RelativePath);
 		// Get reasons to sync.
 		Console.WriteLine();
 		for (int i = 0; i < sourceData.Count; i++)
 		{
 			var item = sourceData[i];
+			item.SourceChecksum = GetHashFromFile(item.SourceFI.FullName);
 			if (item.TargetFI == null)
 			{
 				item.Reason = SynReason.Missing;
-				Console.WriteLine("{0,-8} {1}", item.Reason, item.relativePath);
+				Console.WriteLine("{0,-8} {1}", item.Reason, item.RelativePath);
 				continue;
 			}
+			item.TargetChecksum = GetHashFromFile(item.TargetFI.FullName);
 			if (item.TargetFI.Length != item.SourceFI.Length)
 			{
 				item.Reason = SynReason.Size;
-				Console.WriteLine("{0,-8} {1}", item.Reason, item.relativePath);
+				Console.WriteLine("{0,-8} {1}", item.Reason, item.RelativePath);
 				continue;
 			}
-			item.SourceChecksum = GetHashFromFile(item.SourceFI.FullName);
-			item.TargetChecksum = GetHashFromFile(item.TargetFI.FullName);
 			for (int c = 0; c < item.SourceChecksum.Length; c++)
 			{
 				if (item.SourceChecksum[c] != item.TargetChecksum[c])
@@ -92,14 +95,45 @@ public class Sync_Folders
 			}
 			if (item.Reason == SynReason.Checksum)
 			{
-				Console.WriteLine("{0,-8} {1}", item.Reason, item.relativePath);
-				var sc = string.Join("", item.SourceChecksum.Select(x => x.ToString("X2")));
-				var tc = string.Join("", item.TargetChecksum.Select(x => x.ToString("X2")));
+				Console.WriteLine("{0,-8} {1}", item.Reason, item.RelativePath);
+				var sc = string.Join("", item.SourceChecksum.Select(x => x.ToString("X2"))).ToLower();
+				var tc = string.Join("", item.TargetChecksum.Select(x => x.ToString("X2"))).ToLower();
 				Console.WriteLine("  Source: {0}", sc);
 				Console.WriteLine("  Target: {0}", tc);
 			}
 		}
+		if (saveDates)
+		{
+			SaveDates(sourceData, "Sync_Folders.dates.txt");
+			SaveCheck(sourceData, "Sync_Folders.sha256");
+		}
 		return 0;
+	}
+
+	public static void SaveCheck(List<FileData> list, string path)
+	{
+		var sb = new StringBuilder();
+		for (int i = 0; i < list.Count; i++)
+		{
+			var item = list[i];
+			var sc = string.Join("", item.SourceChecksum.Select(x => x.ToString("X2"))).ToLower();
+			sb.AppendFormat("{0} *{1}\r\n", sc, item.RelativePath);
+		}
+		File.WriteAllText(path, sb.ToString());
+	}
+
+	public static void SaveDates(List<FileData> list, string path)
+	{
+		var sb = new StringBuilder();
+		for (int i = 0; i < list.Count; i++)
+		{
+			var item = list[i];
+			sb.AppendFormat(
+				"{0:yyyy-MM-ddTHH:mm:ss.fffffffzzz} {1:yyyy-MM-ddTHH:mm:ss.fffffffzzz} {2}\r\n",
+				item.SourceFI.CreationTime, item.SourceFI.LastWriteTime, item.RelativePath
+			);
+		}
+		File.WriteAllText(path, sb.ToString());
 	}
 
 	public enum SynReason
@@ -113,8 +147,8 @@ public class Sync_Folders
 
 	public class FileData
 	{
-		public string relativePath;
-		public string relativePathUpper;
+		public string RelativePath;
+		public string RelativePathUpper;
 		public FileInfo SourceFI;
 		public FileInfo TargetFI;
 		public byte[] SourceChecksum;

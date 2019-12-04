@@ -37,7 +37,7 @@ SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
 :: Call script
-CALL:PS "/source=.\Source" "/target=.\Target"
+CALL:PS "/source=.\Source" "/target=.\Target" "/save_dates"
 ECHO.
 pause
 GOTO:EOF
