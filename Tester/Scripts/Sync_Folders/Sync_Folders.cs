@@ -129,7 +129,7 @@ public class Sync_Folders
 		{
 			var item = list[i];
 			sb.AppendFormat(
-				"{0:yyyy-MM-ddTHH:mm:ss.fffffffzzz} {1:yyyy-MM-ddTHH:mm:ss.fffffffzzz} {2}\r\n",
+				"{0:yyyy-MM-ddTHH:mm:ss.fffffffzzz} {1:yyyy-MM-ddTHH:mm:ss.fffffffzzz} *{2}\r\n",
 				item.SourceFI.CreationTime, item.SourceFI.LastWriteTime, item.RelativePath
 			);
 		}
