@@ -168,6 +168,12 @@ namespace JocysCom.Shell.Scripts.Tester
 			var result = TestTask(1);
 			TestAsyncTextBox.Text = result;
 		}
+
+		private void TestSyncFoldersButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<Sync_Folders>();
+			var result = Sync_Folders.ProcessArguments(new string[] { "/source=.\\Source", "/target=.\\Target", "/save_dates" });
+		}
 	}
 }
 
