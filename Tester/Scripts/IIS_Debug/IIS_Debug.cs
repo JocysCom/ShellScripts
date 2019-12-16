@@ -227,8 +227,8 @@ public class IIS_Debug
 					{
 						AttachTask = StartAttach(_Process);
 					}
-					// If task was attached for 10 seconds then...
-					if (_CollectPerf && DetachTask == null && AttachTask != null && !AttachTask.IsCompleted && DateTime.Now.Subtract(AttachTaskTime).TotalSeconds > 10)
+					// If task was attached for specified seconds then...
+					if (_CollectPerf && DetachTask == null && AttachTask != null && !AttachTask.IsCompleted && DateTime.Now.Subtract(AttachTaskTime).TotalSeconds > _PerformanceSeconds)
 					{
 						DetachTask = StartDetach();
 					}
@@ -271,8 +271,9 @@ public class IIS_Debug
 		bool _CollectDump;
 		bool _CollectPerf;
 		string _AppName;
+		int _PerformanceSeconds;
 
-		public bool CollectData(Process process, bool collectDump = true, bool collectPerformace = true, string appName = null)
+		public bool CollectData(Process process, bool collectDump = true, bool collectPerformace = true, string appName = null, int perfomanceSeconds = 60)
 		{
 			lock (ThreadListLock)
 			{
@@ -282,6 +283,7 @@ public class IIS_Debug
 					_CollectDump = collectDump;
 					_CollectPerf = collectPerformace;
 					_AppName = appName;
+					_PerformanceSeconds = perfomanceSeconds;
 					ThreadMonitor.Start();
 				}
 			}
