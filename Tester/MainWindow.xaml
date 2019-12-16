@@ -41,6 +41,7 @@
 		<TextBox x:Name="TestAsyncErrorTextBox" Margin="356,230,10,10" TextWrapping="Wrap" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
 		<Button x:Name="TestSyncButton" Content="Test Sync" Margin="529,180,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="93" Height="20" VerticalAlignment="Top" Click="TestSyncButton_Click" />
 		<Button x:Name="TestSyncFoldersButton" Content="Test Sync Folders" Margin="10,205,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="TestSyncFoldersButton_Click" />
+		<Button x:Name="IisDebugButton" Content="IIS Debug" Margin="183,205,0,0" Padding="8,0,8,0" HorizontalAlignment="Left" Width="168" Height="20" VerticalAlignment="Top" Click="IisDebugButton_Click" />
 
 	</Grid>
 </Window>

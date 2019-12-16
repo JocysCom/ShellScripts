@@ -174,6 +174,12 @@ namespace JocysCom.Shell.Scripts.Tester
 			Prepare<Sync_Folders>();
 			var result = Sync_Folders.ProcessArguments(new string[] { "/source=.\\Source", "/target=.\\Target", "/save_dates" });
 		}
+
+		private void IisDebugButton_Click(object sender, RoutedEventArgs e)
+		{
+			Prepare<IIS_Debug>();
+			var result = IIS_Debug.ProcessArguments(new string[] { });
+		}
 	}
 }
 
