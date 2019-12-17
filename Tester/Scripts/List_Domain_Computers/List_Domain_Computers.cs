@@ -333,8 +333,8 @@ public class List_Domain_Computers
 		// Try twice.
 		for (int i = 0; i < 2; i++)
 		{
-			// Do not use the OS shell.
 			var si = new System.Diagnostics.ProcessStartInfo();
+			// Do not use the OS shell.
 			si.UseShellExecute = false;
 			// Allow writing output to the standard output.
 			si.RedirectStandardOutput = true;
