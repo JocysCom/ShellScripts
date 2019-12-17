@@ -223,12 +223,17 @@ public class IIS_Debug
 					if (_CollectDump && DumpTask == null)
 						DumpTask = StartDump(_Process);
 					// If must collect performance but not started then...
-					if (_CollectPerf && AttachTask == null)
+					if (_CollectPerf && AttachTask == null && dumpDone)
 					{
 						AttachTask = StartAttach(_Process);
+						Console.WriteLine("Detach in {0} seconds {1:HH:mm:ss}.", _PerformanceSeconds, AttachTaskTime.AddSeconds(_PerformanceSeconds));
+					}
+					if (AttachTask != null && !AttachTask.IsCompleted)
+					{
+						//var status = StartStatus().Result;
 					}
 					// If task was attached for specified seconds then...
-					if (_CollectPerf && DetachTask == null && AttachTask != null && !AttachTask.IsCompleted && DateTime.Now.Subtract(AttachTaskTime).TotalSeconds > _PerformanceSeconds)
+					if (_CollectPerf && DetachTask == null && AttachTask != null && DateTime.Now.Subtract(AttachTaskTime).TotalSeconds > _PerformanceSeconds)
 					{
 						DetachTask = StartDetach();
 					}
@@ -273,7 +278,7 @@ public class IIS_Debug
 		string _AppName;
 		int _PerformanceSeconds;
 
-		public bool CollectData(Process process, bool collectDump = true, bool collectPerformace = true, string appName = null, int perfomanceSeconds = 60)
+		public bool CollectData(Process process, bool collectDump = true, bool collectPerformace = true, string appName = null, int perfomanceSeconds = 30)
 		{
 			lock (ThreadListLock)
 			{
@@ -292,16 +297,16 @@ public class IIS_Debug
 
 
 		DateTime DumpTaskTime;
-		Task DumpTask;
+		Task<int?> DumpTask;
 		DateTime AttachTaskTime;
-		Task AttachTask;
+		Task<int?> AttachTask;
 		DateTime DetachTaskTime;
-		Task DetachTask;
+		Task<int?> DetachTask;
 
 		/// <summary>
 		/// Dump profiler to executable.
 		/// </summary>
-		Task StartDump(Process process)
+		Task<int?> StartDump(Process process)
 		{
 			DumpTaskTime = DateTime.Now;
 			var logPrefix = string.Format("Log_{0:yyyyMMdd_HHmmss.ffffff}{1}", DumpTaskTime, ".Dump");
@@ -310,11 +315,11 @@ public class IIS_Debug
 			//              Include the 1 to create dump on first chance exceptions.
 			// - accepteula Automatically accept the Sysinternals license agreement.
 			var arguments = string.Format("-accepteula -ma {0} \"Logs\\{1}.{0}.dmp\"", process.Id, logPrefix);
-			return CreateTask(".Dump", @"Tools\procdump.exe", arguments);
+			return CreateTask(".Dump", @"Tools\ProcDump.exe", arguments);
 		}
 
 		/// <summary>Attach profiler to executable.</summary>
-		Task StartAttach(Process process)
+		Task<int?> StartAttach(Process process)
 		{
 			AttachTaskTime = DateTime.Now;
 			var logPrefix = string.Format("Log_{0:yyyyMMdd_HHmmss.ffffff}{1}", AttachTaskTime, ".Attach");
@@ -322,25 +327,58 @@ public class IIS_Debug
 			return CreateTask(".Attach", @"Tools\VSPerf\VSPerf.exe", arguments);
 		}
 
+		/// <summary>Get Profiles status.</summary>
+		Task<int?> StartStatus()
+		{
+			return CreateTask(".Status", @"Tools\VSPerf\VSPerf.exe", "/status");
+		}
+
 		/// <summary>Detach profiler from executable.</summary>
-		Task StartDetach()
+		Task<int?> StartDetach()
 		{
 			DetachTaskTime = DateTime.Now;
 			return CreateTask(".Detach", @"Tools\VSPerf\VSPerf.exe", "/detach");
 		}
 
-		Task CreateTask(string prefix, string fileName, string arguments)
+		Task<int?> CreateTask(string prefix, string fileName, string arguments)
 		{
 			var fi = new FileInfo(fileName);
 			var task = Task.Factory.StartNew(() =>
 			{
-				Console.WriteLine("Start: {0}", prefix);
+				Console.WriteLine();
+				Console.WriteLine("{0} Start", prefix);
 				var outBuilder = new StringBuilder();
 				var results = Execute(fi.FullName, arguments, outBuilder);
-				Console.WriteLine(results);
+				Console.WriteLine("{0}", IdentText(4, outBuilder.ToString(), ' '));
+				Console.WriteLine("{0} End: {1}", prefix, results);
+				return results;
 			}, TaskCreationOptions.LongRunning);
 			return task;
 		}
+
+		public static string IdentText(int tabs, string s, char ident = '\t')
+		{
+			if (tabs == 0)
+				return s;
+			if (s == null)
+				s = string.Empty;
+			var sb = new StringBuilder();
+			var tr = new StringReader(s);
+			var prefix = string.Empty;
+			for (var i = 0; i < tabs; i++) prefix += ident;
+			string line;
+			while ((line = tr.ReadLine()) != null)
+			{
+				if (sb.Length > 0)
+					sb.AppendLine();
+				if (tabs > 0)
+					sb.Append(prefix);
+				sb.Append(line);
+			}
+			tr.Dispose();
+			return sb.ToString();
+		}
+
 
 		#region IDisposable
 
