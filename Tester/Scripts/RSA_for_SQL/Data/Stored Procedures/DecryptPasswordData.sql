@@ -1,10 +1,4 @@
-IF OBJECT_ID('[Security_DecryptPassword]', 'P') IS NOT NULL DROP PROCEDURE [Security_DecryptPassword]
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[Security_DecryptPassword]
+﻿CREATE PROCEDURE [Security].[DecryptPasswordData]
 	@user_id varchar(50),
 	@password nvarchar(max) = 0 OUT,
 	@error nvarchar(max) = 0 OUT
@@ -14,7 +8,7 @@ AS
 
 DECLARE @password_out nvarchar(max)
 DECLARE @error_out nvarchar(max)
-EXEC [Security_DecryptPassword] '1', @password_out OUT, @error_out OUT
+EXEC [Security].[DecryptPasswordData] '1', @password_out OUT, @error_out OUT
 PRINT 'Password: ' + ISNULL(@password_out, '')
 PRINT 'Error: ' + ISNULL(@error_out, '')
 
@@ -29,7 +23,7 @@ DECLARE
 
 DECLARE @data varbinary(max)
 
-SELECT TOP 1 @data = [data] FROM [Security_UserPasswords] WHERE [user_id] = @user_id ORDER BY [user_id] ASC, id DESC
+SELECT TOP 1 @data = [data] FROM [Security].[UserPasswords] WHERE [UserId] = @user_id ORDER BY [UserId] ASC, id DESC
 
 DECLARE @keyType sysname
 SELECT @keyType = pvt_key_encryption_type FROM sys.certificates

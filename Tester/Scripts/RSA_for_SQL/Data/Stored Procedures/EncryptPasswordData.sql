@@ -1,17 +1,9 @@
-IF OBJECT_ID('[Security_EncryptData]', 'P') IS NOT NULL DROP PROCEDURE [Security_EncryptData]
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[Security_EncryptData]
+﻿CREATE PROCEDURE [Security].[EncryptPasswordData]
 	@data nvarchar(max)
 AS
 SET NOCOUNT ON 
 
--- EXEC [Security_EncryptData] 'password123'
-
-
+-- EXEC [Security].[EncryptPasswordData] 'password123'
 
 -- Opens the symmetric key for use
 OPEN SYMMETRIC KEY SymmetricKey1
@@ -29,4 +21,3 @@ SELECT @plain2, @decrypted2, @encrypted2
 
 -- Closes the symmetric key
 CLOSE SYMMETRIC KEY SymmetricKey1
-
