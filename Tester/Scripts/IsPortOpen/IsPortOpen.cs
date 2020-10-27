@@ -4,6 +4,7 @@ using System.Configuration.Install;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Xml;
@@ -122,12 +123,25 @@ public class IsPortOpen
 		for (int i = 0; i < tasks.Items.Count; i++)
 		{
 			var task = tasks.Items[i];
-			var isOpen = _IsPortOpen(task.DestinationAddress, task.DestinationPort, 20000, 1, false, task.SourceAddress, task.SourcePort);
+			var isOpen = false;
+			if (task.Protocol == "ICMP")
+			{
+				Exception error;
+				isOpen = _Ping(task.DestinationAddress, 5000, out error);
+			}else
+			{
+				isOpen = _IsPortOpen(task.DestinationAddress, task.DestinationPort, 20000, 1, false, task.SourceAddress, task.SourcePort);
+			}
 			var comp = task.Computer;
 			if (string.IsNullOrEmpty(comp))
 				comp = mn;
 			var sp = task.SourcePort > 0 ? task.SourcePort.ToString() : "any";
-			Console.Write(format1, i + 1, mn, task.Protocol, task.SourceAddress, sp, task.DestinationAddress, task.DestinationPort);
+			var dp = task.SourcePort > 0 ? task.SourcePort.ToString() : "";
+			if (task.Protocol == "ICMP"){
+				sp = "";
+				dp = "";
+			}
+			Console.Write(format1, i + 1, mn, task.Protocol, task.SourceAddress, sp, task.DestinationAddress, dp);
 			// Write result.
 			var org = Console.ForegroundColor;
 			Console.ForegroundColor = isOpen ? ConsoleColor.Green : ConsoleColor.Red;
@@ -216,6 +230,48 @@ public class IsPortOpen
 		}
 		return false;
 	}
+
+	static bool _Ping(string hostNameOrAddress, int timeout, out Exception error)
+	{
+		var success = false;
+		error = null;
+		var sw = new System.Diagnostics.Stopwatch();
+		sw.Start();
+		PingReply reply = null;
+		Exception replyError = null;
+		// Use proper threading, because other asynchronous classes
+		// like "Tasks" have problems with Ping.
+		var ts = new System.Threading.ThreadStart(delegate ()
+		{
+			var ping = new Ping();
+			try
+			{
+				reply = ping.Send(hostNameOrAddress);
+			}
+			catch (Exception ex)
+			{
+				replyError = ex;
+			}
+			ping.Dispose();
+		});
+		var t = new System.Threading.Thread(ts);
+		t.Start();
+		t.Join(timeout);
+		if (reply != null)
+		{
+			success = (reply.Status == IPStatus.Success);
+		}
+		else if (replyError != null)
+		{
+			error = replyError;
+		}
+		else
+		{
+			error = new Exception("Ping timed out (" + timeout.ToString() + "): " + sw.Elapsed.ToString());
+		}
+		return success;
+	}
+
 
 	static T Deserialize<T>(string path)
 	{

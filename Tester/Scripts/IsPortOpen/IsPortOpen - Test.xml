@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PortTasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<PortTask Computer="" Protocol="ICMP" DestinationAddress="127.0.0.1" Description="Ping localhost" />
+	<PortTask Computer="" Protocol="ICMP" DestinationAddress="www.google.com" Description="Ping Google" />
+	<PortTask Computer="" Protocol="TCP"  DestinationAddress="www.google.com" DestinationPort="443" Description="Tets HTTPS" />
+	<PortTask Computer="" Protocol="TCP"  DestinationAddress="www.google.com" DestinationPort="443" SourceAddress="127.0.0.1" SourcePort="0" Description="Test HTTPS from Local IP" />
+</PortTasks>
