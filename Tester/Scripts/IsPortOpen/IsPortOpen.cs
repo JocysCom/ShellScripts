@@ -136,7 +136,7 @@ public class IsPortOpen
 			if (string.IsNullOrEmpty(comp))
 				comp = mn;
 			var sp = task.SourcePort > 0 ? task.SourcePort.ToString() : "any";
-			var dp = task.SourcePort > 0 ? task.SourcePort.ToString() : "";
+			var dp = task.DestinationPort > 0 ? task.DestinationPort.ToString() : "";
 			if (task.Protocol == "ICMP"){
 				sp = "";
 				dp = "";
