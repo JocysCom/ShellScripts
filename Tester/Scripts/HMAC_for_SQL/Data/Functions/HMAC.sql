@@ -17,14 +17,14 @@ BEGIN
 	DECLARE @key  varbinary(max) = CAST(N'Password' AS varbinary(max))
 	DECLARE @message varbinary(max) = CAST(N'Message' AS varbinary(max))
 	SELECT @key AS [Key], @message AS [Message]
-	-- Return hash.
+	-- Return hash: 0xD28A366CDA742EB767AB56B7B11893EE73BA2CD54792D5ACF9189D54F36E60EE
 	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
 
 	-- Example 2:
 	DECLARE @key  varbinary(max) = 0x63727970746969
 	DECLARE @message varbinary(max) = 0x68656c6c6f21
 	SELECT @key AS [Key], @message AS [Message]
-	-- Return hash.
+	-- Return hash: 0xD6CBB383C40418C408740AF2727BF8C08231609A3827DBA31538E0D11AB4B1D4
 	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
 
 	*/
