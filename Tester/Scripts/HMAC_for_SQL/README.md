@@ -1,8 +1,8 @@
 # HMAC Implementation for Microsoft SQL Server.
 
-- **Security_HMAC** - Implements HMAC algorithm. Supported and tested algorithms: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
-- **Security_HashPassword** - Returns base64 string which contains random salt and password hash inside. Use SHA-256 algorithm.
-- **Security_IsValidPassword** - Returns 1 if base64 string and password match. Use SHA-256 algorithm.
+- **Security.HMAC** - Implements HMAC algorithm. Supported and tested algorithms: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
+- **Security.HashPassword** - Returns base64 string which contains random salt and password hash inside. Use SHA-256 algorithm.
+- **Security.IsValidPassword** - Returns 1 if base64 string and password match. Use SHA-256 algorithm.
 
 Example:
 ```TSQL
@@ -10,9 +10,9 @@ Example:
 DECLARE @password nvarchar(max) = N'Password'
 -- Get base64 string which contains random salt and password hash inside.
 -- Limit security to 128-bit to make sure that result will fit into old password field.
-DECLARE @base64 varchar(max) = dbo.Security_HashPassword(@password, 128)
+DECLARE @base64 varchar(max) = [Security].[HashPassword](@password, 128)
 -- Validate password against base64 string.
-DECLARE @isValid bit = dbo.Security_IsValidPassword(@password, @base64)
+DECLARE @isValid bit = [Security].IsValidPassword(@password, @base64)
 -- Print results.
 PRINT '@password: ' + @password
 PRINT '@base64:   ' + @base64
@@ -27,7 +27,7 @@ Prints Results:
 <hr />
 
 ```TSQL
-ALTER FUNCTION [dbo].[Security_HMAC] (
+CREATE FUNCTION [Security].[HMAC] (
        @algorithm sysname,
        @key varbinary(max),
        @message varbinary(max)
@@ -37,13 +37,25 @@ AS
 BEGIN
 	-- Author: Evaldas Jocys, https://www.jocys.com
 	-- Created: 2019-07-25
-	/* Example:
+	-- Updated: 2021-06-09 - Key fix suggestion by NReilingh.
+	/*
+
 	-- Use Unicode, because ASCII doesn't work worldwide.
+	
+	-- Example 1:
 	DECLARE @key  varbinary(max) = CAST(N'Password' AS varbinary(max))
 	DECLARE @message varbinary(max) = CAST(N'Message' AS varbinary(max))
-	SELECT @key, @message
+	SELECT @key AS [Key], @message AS [Message]
 	-- Return hash.
-	SELECT dbo.Security_HMAC('SHA2_256', @key, @message)
+	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
+
+	-- Example 2:
+	DECLARE @key  varbinary(max) = 0x63727970746969
+	DECLARE @message varbinary(max) = 0x68656c6c6f21
+	SELECT @key AS [Key], @message AS [Message]
+	-- Return hash.
+	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
+
 	*/
 	-- Set correct block size for the @algorithm: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
 	DECLARE @blockSize int = 64
@@ -58,7 +70,7 @@ BEGIN
 	-- If key is shorter than block size then...
 	IF LEN(@key) < @blockSize 
 		-- pad it with zeroes on the right.
-		SET @key = CAST(@key AS varbinary(max))
+		SET @key = SUBSTRING(CAST(@key AS binary(128)), 0, @blockSize);
 	-- Create inner padding.
 	DECLARE
 		@i int = 1,
@@ -92,16 +104,15 @@ END
 View required for Security_HashPassword function in order to generate random salt.
 
 ```TSQL
-CREATE VIEW [dbo].[Security_NewID]
+CREATE VIEW [Security].[HashPasswordNewID]
 AS
 SELECT NEWID() AS uniqueidentifier
-GO
 ```
 
 <hr />
 
 ```TSQL
-ALTER FUNCTION [dbo].[Security_HashPassword] (
+CREATE FUNCTION [Security].[HashPassword] (
 	@password nvarchar(max),
 	@security int
 )
@@ -114,29 +125,34 @@ BEGIN
 
 	Note: @password is Unicode (nvarchar) type, because ASCII doesn't work worldwide.
 	
-	-- 256-bit security:
+	-- 512-bit security:
+	-- Return 128 bytes (64 salt bytes + 64 hash bytes) as base64 string, which will fit into a varchar(176) field.
+	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 512)
+	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
+
+	-- 256-bit security (default):
 	-- Return 64 bytes (32 salt bytes + 32 hash bytes) as base64 string, which will fit into a varchar(88) field.
-	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password', null)
-	SELECT dbo.Security_IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
+	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 256)
+	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 
 	-- 128-bit security:
 	-- Return 32 bytes (16 salt bytes + 16 hash bytes) as base64 string, which will fit into a varchar(44) field.
-	DECLARE @base64 nvarchar(max) = dbo.Security_HashPassword(N'Password', 128)
-	SELECT dbo.Security_IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
+	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 128)
+	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 
 	*/
 	IF @security IS NULL
 		SET @security = 256
 	DECLARE @size int = @security / 8
-	DECLARE @algorithm sysname = 'SHA2_256'
+	DECLARE @algorithm sysname = CASE WHEN @security > 256 THEN 'SHA2_512' ELSE 'SHA2_256' END
 	-- Convert string to bytes.
 	DECLARE @password_data varbinary(max) = CAST(@password  AS varbinary(max))
 	DECLARE @password_salt varbinary(max) = CAST('' as varbinary(max))
 	-- Generate random salt.
 	WHILE LEN(@password_salt) < @size
-		SET @password_salt = @password_salt + CAST((SELECT * FROM Security_NewID) AS varbinary(16))
+		SET @password_salt = @password_salt + CAST((SELECT * FROM [Security].HashPasswordNewID) AS varbinary(16))
 	SET @password_salt = SUBSTRING(@password_salt, 1, @size);
-	DECLARE @password_hash varbinary(max) = SUBSTRING(dbo.Security_HMAC(@algorithm, @password_salt, @password_data), 1, @size)
+	DECLARE @password_hash varbinary(max) = SUBSTRING([Security].HMAC(@algorithm, @password_salt, @password_data), 1, @size)
 	-- Combine salt and hash and convert to HEX.
 	DECLARE @salt_hash_bin varbinary(max) = @password_salt + @password_hash
 	--DECLARE @salt_hash_hex varchar(max) = CONVERT(varchar(max), @salt_hash_bin, 2)
@@ -149,7 +165,7 @@ END
 <hr />
 
 ```TSQL
-ALTER FUNCTION [dbo].[Security_IsValidPassword] (
+CREATE FUNCTION [Security].[IsValidPassword] (
 	@password nvarchar(max),
 	@base64 varchar(max)
 )
@@ -167,12 +183,12 @@ BEGIN
 	DECLARE @salt_hash_bin varbinary(max) = CAST(N'' as xml).value('xs:base64Binary(sql:variable("@base64"))', 'varbinary(max)');
 	-- Get size of salt and hash.
 	DECLARE @size int = LEN(@salt_hash_bin) / 2
-	DECLARE @algorithm sysname = 'SHA2_256'
+	DECLARE @algorithm sysname = CASE WHEN @size * 8  > 256 THEN 'SHA2_512' ELSE 'SHA2_256' END
 	-- Salt and Hash size.
 	DECLARE @password_data varbinary(max) = CAST(@password AS varbinary(max))
 	DECLARE @salt varbinary(max) = SUBSTRING(@salt_hash_bin, 1, @size)
 	DECLARE @hash varbinary(max) = SUBSTRING(@salt_hash_bin, 1+ @size, @size + @size)
-	DECLARE @password_hash varbinary(max) = SUBSTRING(dbo.Security_HMAC(@algorithm, @salt, @password_data), 1, @size)
+	DECLARE @password_hash varbinary(max) = SUBSTRING([Security].HMAC(@algorithm, @salt, @password_data), 1, @size)
 	-- If @base64 string, which contains salt and hash, match with supplied password then...
 	IF @password_hash = @hash
 		RETURN 1
