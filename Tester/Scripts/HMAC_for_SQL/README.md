@@ -27,6 +27,13 @@ Prints Results:
 <hr />
 
 ```TSQL
+-- Create [Security] Schema.
+CREATE SCHEMA [Security]
+    AUTHORIZATION [dbo];
+````
+<hr />
+
+```TSQL
 CREATE FUNCTION [Security].[HMAC] (
        @algorithm sysname,
        @key varbinary(max),
