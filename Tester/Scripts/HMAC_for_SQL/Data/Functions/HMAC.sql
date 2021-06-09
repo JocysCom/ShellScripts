@@ -9,13 +9,24 @@ BEGIN
 	-- Author: Evaldas Jocys, https://www.jocys.com
 	-- Created: 2019-07-25
 	-- Updated: 2021-06-09 - Key fix suggestion by NReilingh.
-	/* Example:
+	/*
+
 	-- Use Unicode, because ASCII doesn't work worldwide.
+	
+	-- Example 1:
 	DECLARE @key  varbinary(max) = CAST(N'Password' AS varbinary(max))
 	DECLARE @message varbinary(max) = CAST(N'Message' AS varbinary(max))
 	SELECT @key AS [Key], @message AS [Message]
 	-- Return hash.
 	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
+
+	-- Example 2:
+	DECLARE @key  varbinary(max) = 0x63727970746969
+	DECLARE @message varbinary(max) = 0x68656c6c6f21
+	SELECT @key AS [Key], @message AS [Message]
+	-- Return hash.
+	SELECT [Security].HMAC('SHA2_256', @key, @message) AS [Hash]
+
 	*/
 	-- Set correct block size for the @algorithm: MD2, MD4, MD5, SHA, SHA1, SHA2_256, SHA2_512.
 	DECLARE @blockSize int = 64
