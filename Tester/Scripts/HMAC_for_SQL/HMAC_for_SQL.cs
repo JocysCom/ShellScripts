@@ -13,7 +13,27 @@ public class HMAC_for_SQL
 		var isValid = IsValidPassword("Password", base64);
 		Console.WriteLine("Results:");
 		Console.WriteLine("  IsValid: {0}, base64: {1}", isValid, base64);
+		Console.WriteLine();
+		Console.WriteLine("-------");
+		var key = StringToByteArray("0x63727970746969");
+		var data = StringToByteArray("0x68656C6C6F21");
+		var algorithm = new System.Security.Cryptography.HMACSHA256();
+		algorithm.Key = key;
+		var hash = algorithm.ComputeHash(data);
+		Console.WriteLine("  Hash: {0}", string.Join("", hash.Select(x => x.ToString("X2"))));
 		return 0;
+	}
+
+	public static byte[] StringToByteArray(string hex)
+	{
+		if (hex.StartsWith("0x"))
+			hex = hex.Substring(2);
+		hex = hex.Replace(":", "").Replace("-", "");
+		var chars = hex.Length;
+		var bytes = new byte[chars / 2];
+		for (int i = 0; i < chars; i += 2)
+			bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+		return bytes;
 	}
 
 	/// <summary>Hash new password.</summary>
