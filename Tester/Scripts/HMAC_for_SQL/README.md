@@ -130,24 +130,31 @@ BEGIN
 	-- Created: 2019-07-25
 	/* Example:
 
-	Note: @password is Unicode (nvarchar) type, because ASCII doesn't work worldwide.
+	-- Note: @password is Unicode (nvarchar) type, because ASCII doesn't work worldwide.
 	
+	-- Base64 string which will be used to store salt and hash bytes.
+	DECLARE @base64 nvarchar(max)
+
 	-- 512-bit security:
 	-- Return 128 bytes (64 salt bytes + 64 hash bytes) as base64 string, which will fit into a varchar(176) field.
-	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 512)
+	SET @base64 = [Security].HashPassword(N'Password', 512)
+	-- Returns 1 if supplied plain password match salt and hash inside base64 string.
 	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 
 	-- 256-bit security (default):
 	-- Return 64 bytes (32 salt bytes + 32 hash bytes) as base64 string, which will fit into a varchar(88) field.
-	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 256)
+	SET @base64 = [Security].HashPassword(N'Password', 256)
+	-- Returns 1 if supplied plain password match salt and hash inside base64 string.
 	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 
 	-- 128-bit security:
 	-- Return 32 bytes (16 salt bytes + 16 hash bytes) as base64 string, which will fit into a varchar(44) field.
-	DECLARE @base64 nvarchar(max) = [Security].HashPassword(N'Password', 128)
+	SET @base64 = [Security].HashPassword(N'Password', 128)
+	-- Returns 1 if supplied plain password match salt and hash inside base64 string.
 	SELECT [Security].IsValidPassword(N'Password', @base64) as [valid], @base64 as [base]
 
 	*/
+	
 	IF @security IS NULL
 		SET @security = 256
 	DECLARE @size int = @security / 8
