@@ -1,0 +1,22 @@
+<svg version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512">
+    <title>arrow mix icon</title>
+    <desc>arrow mix icon from the IconExperience.com G-Collection. Copyright by INCORS GmbH (www.incors.com).</desc>
+    <defs>
+        <linearGradient x1="0" y1="32" x2="400.0005" y2="432.0005" gradientUnits="userSpaceOnUse" id="color-1">
+            <stop offset="0" stop-color="#129eee"/>
+            <stop offset="0.61177" stop-color="#108ad0"/>
+            <stop offset="1" stop-color="#0e76b2"/>
+        </linearGradient>
+        <linearGradient x1="0" y1="32" x2="420.8485" y2="480.00035" gradientUnits="userSpaceOnUse" id="color-2">
+            <stop offset="0" stop-color="#129ceb"/>
+            <stop offset="0.36863" stop-color="#108bd2"/>
+            <stop offset="1" stop-color="#0e7ab8"/>
+        </linearGradient>
+    </defs>
+    <g fill="none" fill-rule="evenodd" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal">
+        <path d="M512,368l-112,-112l0,80c-47.5,0 -83,-49.5 -118,-98.5c-45,-62.5 -89.5,-125.5 -170,-125.5l0,-80l-112,112l112,112l0,-80c47.5,0 83,49.5 118,98.5c45,62.5 89.5,125.5 170,125.5l0,80z" id="curve1" fill="url(#color-1)"/>
+        <path d="M400,32l112,112l-112,112l0,-80c-47.5,0 -83,49.5 -118,98.5c-45,62.5 -89.5,125.5 -170,125.5l0,80l-112,-112l112,-112l0,80c47.5,0 83,-49.5 118,-98.5c45,-62.5 89.5,-125.5 170,-125.5z" id="curve0" fill="url(#color-2)"/>
+    </g>
+</svg>

@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="JocysCom.Shell.Scripts.Tester.Icons_Default" x:ClassModifier="public">
+  <Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Stretch="Uniform" x:Key="Icon_arrow_mix" x:Shared="False">
+    <Canvas Width="512" Height="512">
+      <Canvas.RenderTransform>
+        <TranslateTransform X="0" Y="0" />
+      </Canvas.RenderTransform>
+      <Canvas.Resources>
+        <LinearGradientBrush xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Key="color-1" MappingMode="Absolute" StartPoint="0,32" EndPoint="400,432">
+          <LinearGradientBrush.GradientStops>
+            <GradientStopCollection>
+              <GradientStop Color="#129EEE" Offset="0" />
+              <GradientStop Color="#108AD0" Offset="0.61177" />
+              <GradientStop Color="#0E76B2" Offset="1" />
+            </GradientStopCollection>
+          </LinearGradientBrush.GradientStops>
+        </LinearGradientBrush>
+        <LinearGradientBrush xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Key="color-2" MappingMode="Absolute" StartPoint="0,32" EndPoint="421,480">
+          <LinearGradientBrush.GradientStops>
+            <GradientStopCollection>
+              <GradientStop Color="#129CEB" Offset="0" />
+              <GradientStop Color="#108BD2" Offset="0.36863" />
+              <GradientStop Color="#0E7AB8" Offset="1" />
+            </GradientStopCollection>
+          </LinearGradientBrush.GradientStops>
+        </LinearGradientBrush>
+      </Canvas.Resources>
+      <!--Unknown tag: sodipodi:namedview-->
+      <Canvas>
+        <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Fill="{StaticResource color-1}" StrokeThickness="1" StrokeMiterLimit="10" StrokeDashArray="" StrokeLineJoin="Miter" StrokeStartLineCap="Flat" StrokeEndLineCap="Flat">
+          <Path.Data>
+            <PathGeometry Figures="M512 368l-112 -112l0 80c-47.5 0 -83 -49.5 -118 -98.5c-45 -62.5 -89.5 -125.5 -170 -125.5l0 -80l-112 112l112 112l0 -80c47.5 0 83 49.5 118 98.5c45 62.5 89.5 125.5 170 125.5l0 80z" FillRule="EvenOdd" />
+          </Path.Data>
+        </Path>
+        <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Fill="{StaticResource color-2}" StrokeThickness="1" StrokeMiterLimit="10" StrokeDashArray="" StrokeLineJoin="Miter" StrokeStartLineCap="Flat" StrokeEndLineCap="Flat">
+          <Path.Data>
+            <PathGeometry Figures="M400 32l112 112l-112 112l0 -80c-47.5 0 -83 49.5 -118 98.5c-45 62.5 -89.5 125.5 -170 125.5l0 80l-112 -112l112 -112l0 80c47.5 0 83 -49.5 118 -98.5c45 -62.5 89.5 -125.5 170 -125.5z" FillRule="EvenOdd" />
+          </Path.Data>
+        </Path>
+      </Canvas>
+    </Canvas>
+  </Viewbox>
+</ResourceDictionary>
