@@ -1,6 +1,39 @@
 # Usefull Shell Scripts
 
-As a C# developer I like to run pure C# as a script instead of using PowerShell as a proxy. :)
+As a C# developer I like to run pure C# as a script instead of using PowerShell as a proxy.
+
+# How to run pure C# from PowerShell and DOS Batch
+
+Lets say you have HelloWorld.cs script on the disk:
+```CSharp
+using System;
+public class HelloWorld
+{
+	public static void ProcessArguments(string[] args)
+	{
+		Console.Write("Hello World!");
+	}
+}
+```
+
+You can execute C# script from HelloWorld.ps1 PowerShell script:
+```PS1
+param($args);
+$source = Get-Content -Raw -Path 'HelloWorld.cs';
+Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('System.Configuration','System.Xml');
+[HelloWorld]::ProcessArguments($args);
+```
+You can execute C# script from HelloWorld.bat DOS batch script:
+```Batch
+@echo off
+PowerShell.exe ^
+$source = Get-Content -Raw -Path 'HelloWorld.cs'; ^
+Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('System.Configuration','System.Xml'); ^
+$args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
+[HelloWorld]::ProcessArguments($args);
+```
+You can load custom assemblies (DLLs) files and shedule scripts in Windows Tasks Scheduler.
+Basically, use plain C# as a scripting language in Windows.
 
 ### [XML Transform...](https://github.com/JocysCom/ShellScripts/tree/master/Tester/Scripts/XML_Transform) 
 
