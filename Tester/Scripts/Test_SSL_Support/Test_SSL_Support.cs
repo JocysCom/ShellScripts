@@ -40,21 +40,29 @@ public class Test_SSL_Support
 			LastCertificateError = null;
 			try
 			{
-				client.Connect(host, port);
-				stream = new SslStream(client.GetStream(),
-					true, ValidateServerCertificate);
-				stream.ReadTimeout = 15000;
-				stream.WriteTimeout = 15000;
-				stream.AuthenticateAsClient(host, null, protocol, false);
-				exchangeAlgorithm = string.Format("{0}", stream.KeyExchangeAlgorithm).ToUpper();
-				if ((int)stream.KeyExchangeAlgorithm == 44550)
-					exchangeAlgorithm = "ECDH";
-				cipherAlgorithm = string.Format("{0}", stream.CipherAlgorithm).ToUpper();
-				hashAlgorithm = string.Format("{0}", stream.HashAlgorithm).ToUpper();
-				status = true;
+				if (new int[] { 25, 110 }.Contains(port))
+				{
+					var success = TestSMTP(host, port, protocol);
+					status = true;
+				}
+				else
+				{
+					client.Connect(host, port);
+					stream = new SslStream(client.GetStream(), true, ValidateServerCertificate);
+					stream.ReadTimeout = 15000;
+					stream.WriteTimeout = 15000;
+					stream.AuthenticateAsClient(host, null, protocol, false);
+					exchangeAlgorithm = string.Format("{0}", stream.KeyExchangeAlgorithm).ToUpper();
+					if ((int)stream.KeyExchangeAlgorithm == 44550)
+						exchangeAlgorithm = "ECDH";
+					cipherAlgorithm = string.Format("{0}", stream.CipherAlgorithm).ToUpper();
+					hashAlgorithm = string.Format("{0}", stream.HashAlgorithm).ToUpper();
+					status = true;
+				}
 			}
-			catch
+			catch (Exception ex1)
 			{
+				Console.WriteLine("{0}: {1}", ex1.GetType(), ex1.Message);
 				status = false;
 			}
 			Console.Write(
@@ -131,16 +139,15 @@ public class Test_SSL_Support
 
 	/// <summary>
 	/// </summary>
-	static void TestSMTP()
+	static bool TestSMTP(string host, int port, SslProtocols protocol)
 	{
-		const string server = "smtp.gmail.com";
-		const int port = 587;
-		using (var client = new TcpClient(server, port))
+		var success = false;
+		using (var client = new TcpClient(host, port))
 		{
 			using (var stream = client.GetStream())
 			using (var clearTextReader = new StreamReader(stream))
 			using (var clearTextWriter = new StreamWriter(stream) { AutoFlush = true })
-			using (var sslStream = new SslStream(stream))
+			using (var sslStream = new SslStream(stream, false, ValidateServerCertificate))
 			{
 				// Sending EHLO instead of HELO will normally get a response with multiple lines,
 				// showing all commands supported by the server, each on its own line starting with 250.
@@ -160,17 +167,17 @@ public class Test_SSL_Support
 				var startTlsResponse = clearTextReader.ReadLine();
 				if (!startTlsResponse.StartsWith("220"))
 					throw new InvalidOperationException("SMTP Server did not respond to STARTTLS request");
-				sslStream.AuthenticateAsClient(server);
+				sslStream.AuthenticateAsClient(host, null, protocol, false);
 				using (var reader = new StreamReader(sslStream))
 				using (var writer = new StreamWriter(sslStream) { AutoFlush = true })
 				{
-					writer.WriteLine("EHLO " + server);
+					writer.WriteLine("EHLO " + host);
 					Console.WriteLine(reader.ReadLine());
+					success = true;
 				}
 			}
+			return success;
 		}
-		Console.WriteLine("Press Enter to exit...");
-		Console.ReadLine();
 	}
 
 	#region Ignore invalid SSL Certificate
