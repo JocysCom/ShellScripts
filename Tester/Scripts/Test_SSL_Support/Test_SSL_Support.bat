@@ -1,50 +1,20 @@
 @echo off
-::-------------------------------------------------------------
-:: Check permissions and run as Administrator.
-::-------------------------------------------------------------
-ATTRIB %windir%\system32 -h | FINDSTR /I "denied" >nul
-IF NOT ERRORLEVEL 1 GOTO:ADM
-GOTO:EXE
-::-------------------------------------------------------------
-:ADM
-::-------------------------------------------------------------
-:: Create temp batch.
-SET tb="%TEMP%\%~n0.tmp.bat"
-SET tj="%TEMP%\%~n0.tmp.js"
-ECHO @echo off> %tb%
-ECHO %~d0>> %tb%
-ECHO cd "%~p0">> %tb%
-ECHO call "%~nx0" %1 %2 %3 %4 %5 %6 %7 %8 %9>> %tb%
-ECHO del %tj%>> %tb%
-:: Delete itself without generating any error message.
-ECHO (goto) 2^>nul ^& del %tb%>> %tb%
-:: Create temp script.
-ECHO var arg = WScript.Arguments;> %tj%
-ECHO var wsh = WScript.CreateObject("WScript.Shell");>> %tj%
-ECHO var sha = WScript.CreateObject("Shell.Application");>> %tj%
-ECHO sha.ShellExecute(arg(0), "", wsh.CurrentDirectory, "runas", 1);>> %tj%
-:: Execute as Administrator.
-cscript /B /NoLogo %tj% %tb%
-GOTO:EOF
-::-------------------------------------------------------------
-:EXE
-::-------------------------------------------------------------
-
 SETLOCAL
 TITLE Test SSL Support
 :: %~n0 - filename without extension.
 SET file=%~n0
 :: Current directory.
 SET cdir=%~dp0
-:: <script> <working_folder> <pattern> <data_file>
-:: HTTPS
-CALL:PS "/host=www.google.com" "/port=443"
-:: LDAP using Active Domain:
-::CALL:PS "/host=ServerName" "/port=636"
-:: LDAP using Global Catalog:
-::CALL:PS "/host=ServerName" "/port=3269"
-:: Remote Desktop Protocol (RDP):
-::CALL:PS "/host=ServerName" "/port=3389"
+:: Test SSL/TLS.
+CALL:PS www.google.com 443
+CALL:PS smtp.gmail.com 465
+:: Test StartTLS.
+::CALL:PS mail.jocys.com 110
+::CALL:PS mail.jocys.com  25
+:: Test LDAP
+::CALL:PS ServerName   636  :: LDAP using Active Domain
+::CALL:PS ServerName  3269  :: LDAP using Global Catalog
+::CALL:PS ServerName  3389  :: Remote Desktop Protocol (RDP):
 ECHO.
 pause
 GOTO:EOF
@@ -56,8 +26,7 @@ SET u1=System.Configuration
 SET u2=System.Configuration.Install
 SET u3=System.Xml
 :: Run script.
-PowerShell.exe ^
-Set-ExecutionPolicy RemoteSigned; ^
+PowerShell.exe -ExecutionPolicy Bypass; ^
 $source = Get-Content -Raw -Path '%csFile%'; ^
 Add-Type -TypeDefinition "$source" -ReferencedAssemblies @('%u1%','%u2%','%u3%'); ^
 $args = @('%~0', '%~1', '%~2', '%~3', '%~4', '%~5', '%~6', '%~7', '%~8', '%~9'); ^
