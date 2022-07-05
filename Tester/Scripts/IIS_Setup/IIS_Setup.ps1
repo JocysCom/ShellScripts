@@ -254,12 +254,15 @@ function CreateConfiguration
     }
     # Write configuration.
     Write-Host;
-    $name = Read-Host -Prompt "Type configuration name and press ENTER to continue";
+    $default = $env:COMPUTERNAME;
+    $name = Read-Host  -Prompt "Type configuration name and press ENTER to continue [$default]";
+    if ($name -eq ''){
+        $name = $default
+    }
     Write-Host;
     [string]$global:configFile = "$scriptFile.$name.xml";
     # Data to XML file.
     [IIS_Setup]::Serialize([Data]$data, $configFile);
-    [IIS_Setup]::SetSettings($configFile, $poolNames, $siteNames);
 }
 # ----------------------------------------------------------------------------
 function FormatXML

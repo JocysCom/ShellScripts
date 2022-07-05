@@ -17,16 +17,6 @@ public class IIS_Setup
 		return Deserialize<Data>(file);
 	}
 
-	public static void SetSettings(string file, IEnumerable<string> pools, IEnumerable<string> sites)
-	{
-		var data = new Data();
-		foreach (var name in pools)
-			data.Pools.Add(new Item() { Name = name});
-		foreach (var name in sites)
-			data.Sites.Add(new Item() { Name = name});
-		Serialize(data, file);
-	}
-
     public static T Deserialize<T>(string path)
 	{
 		if (!File.Exists(path))
