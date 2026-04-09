@@ -1,260 +1,56 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{38919B2D-E2C9-45C0-A77E-6B90EBFAA7B1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>JocysCom.Shell.Scripts.Tester</RootNamespace>
     <AssemblyName>JocysCom.Shell.Scripts.Tester</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WarningLevel>4</WarningLevel>
-    <Deterministic>true</Deterministic>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>1</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <PublishWizardCompleted>true</PublishWizardCompleted>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AppConfig>App.Transformed.$(Configuration).config</AppConfig>
-  </PropertyGroup>
-  <PropertyGroup>
     <ApplicationIcon>App.ico</ApplicationIcon>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>true</Deterministic>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- This is a Windows-only WPF app, so CA1416 Windows-platform warnings are noise
+         (every P/Invoke and DirectoryServices call would otherwise trip it). Everything
+         else is fixed in code rather than suppressed. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
-  <PropertyGroup>
-    <GenerateManifests>false</GenerateManifests>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignManifests>false</SignManifests>
-  </PropertyGroup>
-  <PropertyGroup>
-    <TargetZone>LocalIntranet</TargetZone>
-  </PropertyGroup>
-  <PropertyGroup />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Dev|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Dev\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
-    <OutputPath>bin\Test\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.Web.XmlTransform">
-      <HintPath>..\Resources\Microsoft.Web.XmlTransform.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.Entity" />
-    <Reference Include="System.DirectoryServices" />
-    <Reference Include="System.DirectoryServices.AccountManagement" />
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xaml">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
+    <PackageReference Include="Microsoft.Web.Xdt" />
+    <!-- System.DirectoryServices and System.Configuration.ConfigurationManager ship
+         in the net10.0 runtime; only AccountManagement still needs an explicit ref. -->
+    <PackageReference Include="System.DirectoryServices.AccountManagement" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" />
   </ItemGroup>
+
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Compile Include="JocysCom\ConsoleNativeMethods.CreateConsole.cs" />
-    <Compile Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.cs" />
-    <Compile Include="Scripts\Config_Files_Report\Config_Files_Report.cs" />
-    <Compile Include="Scripts\HMAC_for_SQL\HMAC_for_SQL.cs" />
-    <Compile Include="Scripts\IIS_Debug\IIS_Debug.cs" />
-    <Compile Include="Scripts\IsPortOpen\IsPortOpen.cs" />
-    <Compile Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.cs" />
-    <Compile Include="Scripts\List_Domain_Computers\List_Domain_Computers.cs" />
-    <Compile Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.cs" />
-    <Compile Include="Scripts\RSA_for_SQL\RSA_for_SQL.cs" />
-    <Compile Include="Scripts\Sync_Folders\Sync_Folders.cs" />
-    <Compile Include="Scripts\Test_Domains\Test_Domains.cs" />
-    <Compile Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.cs" />
-    <Compile Include="Scripts\Test_SSL_Support\Test_SSL_Support.cs" />
-    <Compile Include="Scripts\XML_Format\XML_Format.cs" />
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Compile Include="..\XML_Transform.cs">
-      <Link>Scripts\XML_Transform\XML_Transform.cs</Link>
-    </Compile>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
+    <!-- The files under Scripts\*\*.cs are standalone sample programs kept next to
+         their .ps1/.bat equivalents as reference material. The dynamic MainWindow
+         spawns scripts as external processes and never instantiates these classes,
+         so they're dead code in the build graph — excluding them drops a pile of
+         obsolete-API warnings from legacy sample code without hiding real issues. -->
+    <Compile Remove="Scripts\**\*.cs" />
+    <None Include="Scripts\**\*.cs" />
+    <!-- Exclude timestamped backup snapshots created by repo sync tooling. -->
+    <Compile Remove="JocysCom.bak-*\**\*.cs" />
+    <None Remove="JocysCom.bak-*\**\*" />
+    <Page Remove="JocysCom.bak-*\**\*.xaml" />
+    <Resource Remove="JocysCom.bak-*\**\*" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <None Include="..\XML_Transform.bat">
-      <Link>Scripts\XML_Transform\XML_Transform.bat</Link>
-    </None>
-    <None Include="App.Debug.config">
-      <DependentUpon>App.config</DependentUpon>
-      <IsTransformFile>true</IsTransformFile>
-    </None>
-    <None Include="App.Dev.config">
-      <DependentUpon>App.config</DependentUpon>
-      <IsTransformFile>true</IsTransformFile>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="App.Release.config">
-      <DependentUpon>App.config</DependentUpon>
-      <IsTransformFile>true</IsTransformFile>
-    </None>
-    <None Include="App.Test.config">
-      <DependentUpon>App.config</DependentUpon>
-      <IsTransformFile>true</IsTransformFile>
-    </None>
-    <None Include="App.Transformed.Debug.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="App.Transformed.Dev.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="App.Transformed.Release.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="App.Transformed.Test.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="Scripts\Backup_and_Restore_Dates\Backup_and_Restore_Dates.bat" />
-    <None Include="Scripts\Config_Files_Report\Config_Files_Report.bat" />
-    <None Include="Scripts\HMAC_for_SQL\HMAC_for_SQL.bat" />
-    <None Include="Scripts\IIS_Debug\IIS_Debug.bat" />
-    <None Include="Scripts\IIS_ListLogFolders\IIS_ListLogFolders.bat" />
-    <None Include="Scripts\IIS_ListLogFolders\IIS_ListLogFolders.ps1" />
-    <None Include="Scripts\IsPortOpen\IsPortOpen.bat" />
-    <None Include="Scripts\List_Cipher_Suites\List_Cipher_Suites.bat" />
-    <None Include="Scripts\List_Domain_Computers\List_Domain_Computers.bat" />
-    <None Include="Scripts\Multi_Threading_Test\Multi_Threading_Test.bat" />
-    <None Include="Scripts\RSA_for_SQL\RSA_for_SQL.bat" />
-    <None Include="Scripts\Sync_Folders\Sync_Folders.bat" />
-    <None Include="Scripts\Test_Domains\Test_Domains.bat" />
-    <None Include="Scripts\Test_Domain_TLS_Support\Test_Domain_TLS_Support.bat" />
-    <None Include="Scripts\Test_SSL_Support\Test_SSL_Support.bat" />
-    <None Include="Scripts\XML_Format\XML_Format.bat" />
+    <Compile Include="..\XML_Transform.cs" Link="Scripts\XML_Transform\XML_Transform.cs" />
+    <None Include="..\XML_Transform.bat" Link="Scripts\XML_Transform\XML_Transform.bat" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-      <TransformOnBuild>true</TransformOnBuild>
-    </None>
-  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="App.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Scripts\Sync_Folders\Source\fileA.txt" />
     <Resource Include="Scripts\Sync_Folders\Source\fileB.txt" />
     <Resource Include="Scripts\Sync_Folders\Target\fileC.txt" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <!--<UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll"/>-->
-  <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets. -->
-  <Target Name="BeforeCompile">
-    <!-- Happens after PreBuildEvent but BeforeCompile -->
-    <TransformXml Source="App.config" Transform="App.Debug.config" Destination="App.Transformed.Debug.config" />
-    <TransformXml Source="App.config" Transform="App.Dev.config" Destination="App.Transformed.Dev.config" />
-    <TransformXml Source="App.config" Transform="App.Test.config" Destination="App.Transformed.Test.config" />
-    <TransformXml Source="App.config" Transform="App.Release.config" Destination="App.Transformed.Release.config" />
-  </Target>
+
 </Project>

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Tester.Tests/JocysCom.ShellScripts.Tester.Tests.csproj" />
+  <Project Path="Tester/JocysCom.ShellScripts.Tester.csproj" Id="38919b2d-e2c9-45c0-a77e-6b90ebfaa7b1" />
+</Solution>

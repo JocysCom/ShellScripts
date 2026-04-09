@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Web.Xdt" Version="3.2.5" />
+    <PackageVersion Include="System.DirectoryServices" Version="10.0.5" />
+    <PackageVersion Include="System.DirectoryServices.AccountManagement" Version="10.0.5" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.PowerShell.SDK" Version="7.6.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.2.1" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.2.1" />
+  </ItemGroup>
+</Project>

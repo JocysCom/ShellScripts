@@ -1,185 +1,340 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Management.Automation.Language;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace JocysCom.Shell.Scripts.Tester
 {
 	/// <summary>
-	/// Interaction logic for MainWindow.xaml
+	/// Scans the configured Scripts folder and builds the UI dynamically.
+	/// For each discovered script it lets the user fill in parameters and run it.
+	/// PowerShell (.ps1) parameters are detected via the official PowerShell parser
+	/// (System.Management.Automation.Language.Parser), so no regex guessing is needed.
 	/// </summary>
 	public partial class MainWindow : Window
 	{
 		public MainWindow()
 		{
 			InitializeComponent();
-			LoadSettings();
+			DarkThemeCheckBox.IsChecked = JocysCom.Shell.Scripts.Tester.Properties.Settings.Default.DarkTheme;
+			var configured = JocysCom.Shell.Scripts.Tester.Properties.Settings.Default.FolderTextBoxText;
+			// Always prefer the product's own Tester\Scripts folder when it can be located
+			// alongside the exe — the user explicitly wanted that to be the default.
+			var bundled = GetDefaultScriptsFolder();
+			FolderTextBox.Text = Directory.Exists(bundled)
+				? bundled
+				: (string.IsNullOrWhiteSpace(configured) || !Directory.Exists(configured) ? bundled : configured);
+			LoadScripts();
 		}
 
-		private void FolderButton_Click(object sender, RoutedEventArgs e)
+		static string GetDefaultScriptsFolder()
 		{
-			var dialog = new System.Windows.Forms.FolderBrowserDialog();
-			dialog.SelectedPath = FolderTextBox.Text;
-			var result = dialog.ShowDialog();
-			if (result == System.Windows.Forms.DialogResult.OK)
+			// Walk up from the executable looking for the canonical Tester\Scripts folder,
+			// then fall back to any bare Scripts folder. This avoids resolving to a
+			// drive root on first launch.
+			var dir = new DirectoryInfo(AppContext.BaseDirectory);
+			while (dir != null)
 			{
-				FolderTextBox.Text = dialog.SelectedPath;
+				var testerScripts = Path.Combine(dir.FullName, "Tester", "Scripts");
+				if (Directory.Exists(testerScripts))
+					return testerScripts;
+				var plainScripts = Path.Combine(dir.FullName, "Scripts");
+				if (Directory.Exists(plainScripts))
+					return plainScripts;
+				dir = dir.Parent;
 			}
-		}
-
-		void LoadSettings()
-		{
-			FolderTextBox.Text = Properties.Settings.Default.FolderTextBoxText;
-			EnvironmentTextBox.Text = Properties.Settings.Default.EnvironmentTextBoxText;
+			return AppContext.BaseDirectory;
 		}
 
 		void SaveSettings()
 		{
-			Properties.Settings.Default.FolderTextBoxText = FolderTextBox.Text;
-			Properties.Settings.Default.EnvironmentTextBoxText = EnvironmentTextBox.Text;
-			Properties.Settings.Default.Save();
+			JocysCom.Shell.Scripts.Tester.Properties.Settings.Default.FolderTextBoxText = FolderTextBox.Text;
+			JocysCom.Shell.Scripts.Tester.Properties.Settings.Default.DarkTheme = DarkThemeCheckBox.IsChecked == true;
+			JocysCom.Shell.Scripts.Tester.Properties.Settings.Default.Save();
 		}
 
-		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) => SaveSettings();
+
+		void DarkThemeCheckBox_Changed(object sender, RoutedEventArgs e)
+			=> App.ApplyTheme(DarkThemeCheckBox.IsChecked == true);
+
+		void BrowseButton_Click(object sender, RoutedEventArgs e)
 		{
-			SaveSettings();
+			var dialog = new System.Windows.Forms.FolderBrowserDialog
+			{
+				SelectedPath = Directory.Exists(FolderTextBox.Text) ? FolderTextBox.Text : AppContext.BaseDirectory,
+				Description = "Select Scripts folder",
+			};
+			if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+			{
+				FolderTextBox.Text = dialog.SelectedPath;
+				LoadScripts();
+			}
 		}
 
-		void Prepare<T>()
+		void RefreshButton_Click(object sender, RoutedEventArgs e) => LoadScripts();
+
+		void LoadScripts()
 		{
-			var location = System.Reflection.Assembly.GetExecutingAssembly().Location;
-			var fi = new System.IO.FileInfo(location);
-			var dir = fi.Directory.Parent.Parent;
-			var path = Path.Combine(dir.FullName, "Scripts", typeof(T).Name);
-			System.IO.Directory.SetCurrentDirectory(path);
-			JocysCom.ClassLibrary.Runtime.ConsoleNativeMethods.CreateConsole();
+			ScriptsListBox.ItemsSource = null;
+			ParametersPanel.Children.Clear();
+			ScriptHeader.Text = string.Empty;
+			ScriptPathLabel.Text = string.Empty;
+			RunButton.IsEnabled = false;
+			OpenFolderButton.IsEnabled = false;
+
+			var root = FolderTextBox.Text;
+			if (!Directory.Exists(root))
+			{
+				SetStatus($"Folder not found: {root}");
+				return;
+			}
+
+			var items = new List<ScriptItem>();
+			// Skip ACL-denied folders silently — picking a drive root (e.g. C:\) would
+			// otherwise crash on paths like C:\Config.Msi.
+			var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false };
+			IEnumerable<string> subDirs;
+			try { subDirs = Directory.EnumerateDirectories(root, "*", enumOptions).OrderBy(x => x); }
+			catch (Exception ex) { SetStatus($"Cannot read {root}: {ex.Message}"); return; }
+			foreach (var subDir in subDirs)
+			{
+				var dirName = Path.GetFileName(subDir);
+				IEnumerable<string> files;
+				try { files = Directory.EnumerateFiles(subDir, "*", enumOptions).OrderBy(x => x); }
+				catch { continue; }
+				foreach (var file in files)
+				{
+					var ext = Path.GetExtension(file).ToLowerInvariant();
+					if (ext != ".ps1" && ext != ".bat" && ext != ".cmd")
+						continue;
+					items.Add(new ScriptItem
+					{
+						DisplayName = $"{dirName}  —  {Path.GetFileName(file)}",
+						FilePath = file,
+						Kind = ext == ".ps1" ? ScriptKind.PowerShell : ScriptKind.Batch,
+					});
+				}
+			}
+
+			ScriptsListBox.ItemsSource = items;
+			SetStatus($"Loaded {items.Count} script(s) from {root}");
 		}
 
-		private void TransformButton_Click(object sender, RoutedEventArgs e)
+		ScriptItem _current;
+
+		void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			var transforms = XML_Transform.GetTransforms(FolderTextBox.Text);
-			XML_Transform.TransformFolder(transforms, EnvironmentTextBox.Text);
-			StatusLabel.Content = string.Format("{0:yyyy-MM-dd HH:mm:ss}: Done", DateTime.Now);
+			_current = ScriptsListBox.SelectedItem as ScriptItem;
+			ParametersPanel.Children.Clear();
+			if (_current == null)
+			{
+				RunButton.IsEnabled = false;
+				OpenFolderButton.IsEnabled = false;
+				ScriptHeader.Text = string.Empty;
+				ScriptPathLabel.Text = string.Empty;
+				return;
+			}
+			ScriptHeader.Text = Path.GetFileName(_current.FilePath);
+			ScriptPathLabel.Text = _current.FilePath;
+			RunButton.IsEnabled = true;
+			OpenFolderButton.IsEnabled = true;
+
+			if (_current.Kind == ScriptKind.PowerShell)
+				BuildPowerShellParameterUI(_current);
+			else
+				BuildBatchParameterUI(_current);
 		}
 
-		private void ConfigFilesReportButton_Click(object sender, RoutedEventArgs e)
+		void BuildPowerShellParameterUI(ScriptItem item)
 		{
-			Prepare<Config_Files_Report>();
-			var result = Config_Files_Report.ProcessArguments(null);
-		}
-
-		private void ListDomainComputersButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<List_Domain_Computers>();
-			var result = List_Domain_Computers.ProcessArguments(null);
-		}
-
-		private void HmacForSqlButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<HMAC_for_SQL>();
-			var result = HMAC_for_SQL.ProcessArguments(null);
-		}
-
-		private void TestDomainsButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<Test_Domains>();
-			var result = Test_Domains.ProcessArguments(null);
-		}
-
-		private void TestSSLSupportButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<Test_SSL_Support>();
-			var result = Test_SSL_Support.ProcessArguments(null);
-		}
-
-		private void TestDomainTlsSupportButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<Test_Domain_TLS_Support>();
-			var result = Test_Domain_TLS_Support.ProcessArguments(new string[] { "/computers=PC15100" });
-		}
-
-		private void RsaForSqlButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<RSA_for_SQL>();
-			var result = RSA_for_SQL.ProcessArguments();
-		}
-
-		private void IsPortOpenButton_Click(object sender, RoutedEventArgs e)
-		{
-			Prepare<IsPortOpen>();
-			var result = IsPortOpen.ProcessArguments(new string[] { "/TaskFile=Google.xml" });
-		}
-
-		async private void TestAsyncButton_Click(object sender, RoutedEventArgs e)
-		{
-			// Create a TaskScheduler that wraps the SynchronizationContext returned from
-			// System.Threading.SynchronizationContext.Current
-			// This is an object that handles the low-level work of queuing tasks onto main User Interface(GUI) thread.
-			var mainTaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-			TestAsyncTextBox.Text = string.Format("{0:mm:ss.fff}", DateTime.Now);
-			// Execute the task and then continue to execute lines on the same thread which started the task.
-			var result = await TestTaskAsync(1).ConfigureAwait(true);
-			TestAsyncTextBox.Text += ", " + result;
-			// Execute the task and continue execute lines on the thread which was used to do the task.
-			result = await TestTaskAsync(2).ConfigureAwait(false);
+			List<ParameterAst> parameters;
 			try
 			{
-				// This line will crash because task thread cannot access TextBox, because it belongs to the main GUI thread.
-				TestAsyncTextBox.Text += ", " + result;
+				var ast = Parser.ParseFile(item.FilePath, out _, out var errors);
+				if (errors != null && errors.Length > 0)
+					SetStatus($"Parse warnings: {errors[0].Message}");
+				parameters = ast.ParamBlock?.Parameters?.ToList()
+					?? ast.FindAll(a => a is ParameterAst, false).OfType<ParameterAst>().ToList();
 			}
 			catch (Exception ex)
 			{
-				//
-				await Task.Factory.StartNew(() =>
-					{
-						TestAsyncErrorTextBox.Text = ex.Message;
-						TestAsyncErrorTextBox.Text += "\r\n, " + result;
-					},
-					System.Threading.CancellationToken.None,
-					TaskCreationOptions.DenyChildAttach, mainTaskScheduler
-				);
+				AddInfo($"Could not parse parameters: {ex.Message}");
+				return;
+			}
+
+			item.ParameterInputs.Clear();
+			if (parameters.Count == 0)
+			{
+				AddInfo("This script has no parameters.");
+				return;
+			}
+
+			foreach (var p in parameters)
+			{
+				var name = p.Name.VariablePath.UserPath;
+				var typeName = p.StaticType?.Name ?? "Object";
+				var defaultValue = p.DefaultValue?.Extent?.Text ?? "";
+				var isSwitch = string.Equals(typeName, "SwitchParameter", StringComparison.OrdinalIgnoreCase);
+				var isBool = string.Equals(typeName, "Boolean", StringComparison.OrdinalIgnoreCase);
+
+				var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+				row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(180) });
+				row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+				var label = new TextBlock
+				{
+					Text = $"{name}  ({typeName})",
+					VerticalAlignment = VerticalAlignment.Center,
+					Margin = new Thickness(0, 0, 6, 0),
+				};
+				Grid.SetColumn(label, 0);
+				row.Children.Add(label);
+
+				FrameworkElement input;
+				if (isSwitch || isBool)
+				{
+					var cb = new CheckBox { VerticalAlignment = VerticalAlignment.Center };
+					input = cb;
+					item.ParameterInputs[name] = new ParameterInput(ParameterInputKind.Switch, cb);
+				}
+				else
+				{
+					var tb = new TextBox { Text = StripQuotes(defaultValue), VerticalContentAlignment = VerticalAlignment.Center };
+					input = tb;
+					item.ParameterInputs[name] = new ParameterInput(ParameterInputKind.Text, tb);
+				}
+				Grid.SetColumn(input, 1);
+				row.Children.Add(input);
+				ParametersPanel.Children.Add(row);
 			}
 		}
 
-		async Task<string> TestTaskAsync(int value)
+		void BuildBatchParameterUI(ScriptItem item)
 		{
-			return await Task.Run(() =>
+			item.ParameterInputs.Clear();
+			AddInfo("Batch scripts use positional arguments. Provide them below (optional):");
+			var tb = new TextBox { Margin = new Thickness(0, 2, 0, 2) };
+			item.ParameterInputs["__args"] = new ParameterInput(ParameterInputKind.Text, tb);
+			ParametersPanel.Children.Add(tb);
+		}
+
+		void AddInfo(string text)
+			=> ParametersPanel.Children.Add(new TextBlock { Text = text, Opacity = 0.7, Margin = new Thickness(0, 2, 0, 2), TextWrapping = TextWrapping.Wrap });
+
+		static string StripQuotes(string text)
+		{
+			if (string.IsNullOrEmpty(text)) return text;
+			if (text.Length >= 2 && (text[0] == '"' || text[0] == '\'') && text[^1] == text[0])
+				return text.Substring(1, text.Length - 2);
+			return text;
+		}
+
+		void RunButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (_current == null) return;
+			try
 			{
-				return TestTask(value);
-			}).ConfigureAwait(true);
+				var psi = _current.Kind == ScriptKind.PowerShell
+					? BuildPowerShellStartInfo(_current)
+					: BuildBatchStartInfo(_current);
+				psi.WorkingDirectory = Path.GetDirectoryName(_current.FilePath) ?? "";
+				psi.UseShellExecute = false;
+				Process.Start(psi);
+				SetStatus($"Started {Path.GetFileName(_current.FilePath)}");
+			}
+			catch (Exception ex)
+			{
+				SetStatus($"Failed: {ex.Message}");
+				MessageBox.Show(this, ex.ToString(), "Run failed", MessageBoxButton.OK, MessageBoxImage.Error);
+			}
 		}
 
-		string TestTask(int value)
+		static ProcessStartInfo BuildPowerShellStartInfo(ScriptItem item)
 		{
-			// Create 5 second delay;
-			var i = 0;
-			var sw = new Stopwatch();
-			sw.Start();
-			while (sw.ElapsedMilliseconds < 3000)
-				i++;
-			return string.Format("{0}: {1}", value, i);
+			var args = new List<string> { "-NoExit", "-ExecutionPolicy", "Bypass", "-File", Quote(item.FilePath) };
+			foreach (var kv in item.ParameterInputs)
+			{
+				if (kv.Value.Kind == ParameterInputKind.Switch)
+				{
+					if (((CheckBox)kv.Value.Control).IsChecked == true)
+						args.Add("-" + kv.Key);
+				}
+				else
+				{
+					var text = ((TextBox)kv.Value.Control).Text;
+					if (string.IsNullOrEmpty(text)) continue;
+					args.Add("-" + kv.Key);
+					args.Add(Quote(text));
+				}
+			}
+			return new ProcessStartInfo(ResolvePowerShellExe(), string.Join(" ", args));
 		}
 
-		private void TestSyncButton_Click(object sender, RoutedEventArgs e)
+		/// <summary>
+		/// Prefer PowerShell 7+ (pwsh.exe). Searches PATH first, then the canonical
+		/// install location, then falls back to Windows PowerShell 5.1.
+		/// </summary>
+		static string ResolvePowerShellExe()
 		{
-			var mainTaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-			var result = TestTask(1);
-			TestAsyncTextBox.Text = result;
+			foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
+			{
+				if (string.IsNullOrWhiteSpace(dir)) continue;
+				var candidate = Path.Combine(dir, "pwsh.exe");
+				if (File.Exists(candidate)) return candidate;
+			}
+			var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+			var standard = Path.Combine(pf, "PowerShell", "7", "pwsh.exe");
+			if (File.Exists(standard)) return standard;
+			return "powershell.exe";
 		}
 
-		private void TestSyncFoldersButton_Click(object sender, RoutedEventArgs e)
+		static ProcessStartInfo BuildBatchStartInfo(ScriptItem item)
 		{
-			Prepare<Sync_Folders>();
-			var result = Sync_Folders.ProcessArguments(new string[] { "/source=.\\Source", "/target=.\\Target", "/save_dates" });
+			var tail = "";
+			if (item.ParameterInputs.TryGetValue("__args", out var pi))
+				tail = ((TextBox)pi.Control).Text ?? "";
+			return new ProcessStartInfo("cmd.exe", $"/k \"\"{item.FilePath}\" {tail}\"");
 		}
 
-		private void IisDebugButton_Click(object sender, RoutedEventArgs e)
+		static string Quote(string s) => s.Contains(' ') ? "\"" + s + "\"" : s;
+
+		void OpenFolderButton_Click(object sender, RoutedEventArgs e)
 		{
-			Prepare<IIS_Debug>();
-			var result = IIS_Debug.ProcessArguments(new string[] { });
+			if (_current == null) return;
+			var dir = Path.GetDirectoryName(_current.FilePath);
+			if (!string.IsNullOrEmpty(dir))
+				Process.Start(new ProcessStartInfo("explorer.exe", dir) { UseShellExecute = true });
+		}
+
+		void SetStatus(string text)
+			=> StatusLabel.Text = $"{DateTime.Now:HH:mm:ss}  {text}";
+
+		// ---- model types ----
+
+		enum ScriptKind { PowerShell, Batch }
+
+		enum ParameterInputKind { Text, Switch }
+
+		class ScriptItem
+		{
+			public string DisplayName { get; set; }
+			public string FilePath { get; set; }
+			public ScriptKind Kind { get; set; }
+			public Dictionary<string, ParameterInput> ParameterInputs { get; } = new Dictionary<string, ParameterInput>();
+			// ListBox exposes this string as the item's UIA Name property.
+			public override string ToString() => DisplayName;
+		}
+
+		class ParameterInput
+		{
+			public ParameterInput(ParameterInputKind kind, FrameworkElement control) { Kind = kind; Control = control; }
+			public ParameterInputKind Kind { get; }
+			public FrameworkElement Control { get; }
 		}
 	}
 }
-

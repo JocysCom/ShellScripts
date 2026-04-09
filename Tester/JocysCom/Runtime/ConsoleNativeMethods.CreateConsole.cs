@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 
 namespace JocysCom.ClassLibrary.Runtime
 {
-	public class ConsoleNativeMethods
+	public partial class ConsoleNativeMethods
 	{
 
 		/// <summary>
@@ -58,9 +58,9 @@ namespace JocysCom.ClassLibrary.Runtime
 			GenericAll = 0x10000000
 		}
 
-		/// <summary>
-		/// Includes workaround for when Console.Out Output is showing in Output Window.
-		/// </summary>
+		/// <summary>Allocates a new console and redirects Console.Out to it, working around Visual Studio Output Window redirection bug.</summary>
+		/// <returns>True if the console was allocated and output redirected; false if console allocation failed.</returns>
+		/// <exception cref="Win32Exception">Thrown if obtaining or setting the console output handle fails.</exception>
 		public static bool CreateConsole()
 		{
 			if (!AllocConsole())
